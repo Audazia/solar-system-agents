@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solar System Agents — AI Agent Dashboard</title>
+<meta name="description" content="The cyberpunk dashboard for monitoring AI agent fleets. Real-time mission control. Zero dependencies. Open source.">
+<meta property="og:title" content="Solar System Agents — AI Agent Dashboard">
+<meta property="og:description" content="Monitor your AI agent fleet with a cyberpunk mission control dashboard. Zero dependencies. Works with any framework.">
+<meta property="og:image" content="https://raw.githubusercontent.com/roomsterdam/solar-system-agents/main/mission-control-live.gif">
+<meta property="og:url" content="https://roomsterdam.github.io/solar-system-agents/">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Share+Tech+Mono&family=Inter:wght@300;400;600;700&display=swap');
+
+  :root {
+    --bg: #050510;
+    --bg2: #0a0e1a;
+    --cyan: #00d4ff;
+    --orange: #ff6b2b;
+    --green: #00ff88;
+    --yellow: #ffd700;
+    --red: #ff3355;
+    --text: #c0d8f0;
+    --text-dim: #5a7a9a;
+    --border: #1e3a5f;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    overflow-x: hidden;
+    line-height: 1.6;
+  }
+
+  /* STARFIELD */
+  .stars { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 0; }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0;
+    background: rgba(5,5,16,0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(0,212,255,0.15);
+    padding: 12px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 100;
+  }
+  .nav-logo {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 10px;
+    color: var(--cyan);
+    text-shadow: 0 0 10px rgba(0,212,255,0.5);
+    letter-spacing: 2px;
+  }
+  .nav-links { display: flex; gap: 24px; align-items: center; }
+  .nav-links a { color: var(--text-dim); text-decoration: none; font-size: 14px; transition: color 0.2s; }
+  .nav-links a:hover { color: var(--cyan); }
+  .nav-cta {
+    background: var(--cyan);
+    color: var(--bg);
+    padding: 8px 20px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 13px;
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+  .nav-cta:hover { background: white; color: var(--bg); box-shadow: 0 0 20px rgba(0,212,255,0.4); }
+
+  section { position: relative; z-index: 1; }
+
+  /* HERO */
+  .hero {
+    padding: 140px 40px 80px;
+    text-align: center;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .hero-badge {
+    display: inline-block;
+    padding: 4px 14px;
+    border: 1px solid var(--orange);
+    border-radius: 20px;
+    font-size: 12px;
+    color: var(--orange);
+    margin-bottom: 24px;
+    letter-spacing: 1px;
+  }
+  .hero h1 {
+    font-family: 'Press Start 2P', cursive;
+    font-size: clamp(18px, 4vw, 32px);
+    line-height: 1.5;
+    margin-bottom: 24px;
+    background: linear-gradient(90deg, var(--cyan), var(--green), var(--orange));
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: gradShift 4s ease infinite;
+  }
+  @keyframes gradShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+  .hero p { font-size: 18px; color: var(--text-dim); max-width: 600px; margin: 0 auto 32px; line-height: 1.7; }
+  .hero-buttons { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: linear-gradient(135deg, var(--cyan), #0088cc);
+    color: white; padding: 14px 32px; border-radius: 8px;
+    font-weight: 700; font-size: 16px; text-decoration: none;
+    transition: all 0.3s; border: none; cursor: pointer;
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,212,255,0.4); }
+  .btn-secondary {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: transparent; color: var(--text);
+    padding: 14px 32px; border-radius: 8px; border: 1px solid var(--border);
+    font-weight: 600; font-size: 16px; text-decoration: none;
+    transition: all 0.3s; cursor: pointer;
+  }
+  .btn-secondary:hover { border-color: var(--cyan); color: var(--cyan); }
+
+  /* DEMO */
+  .demo {
+    padding: 20px 40px 80px;
+    text-align: center;
+  }
+  .demo img {
+    max-width: 900px;
+    width: 100%;
+    border-radius: 12px;
+    border: 2px solid var(--border);
+    box-shadow: 0 20px 80px rgba(0,212,255,0.15), 0 0 1px rgba(0,212,255,0.3);
+  }
+
+  /* FEATURES */
+  .features {
+    padding: 80px 40px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .features h2 {
+    text-align: center;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 16px;
+    color: var(--cyan);
+    margin-bottom: 48px;
+    letter-spacing: 2px;
+  }
+  .feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+  }
+  .feature-card {
+    background: rgba(17,24,39,0.6);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(30,58,95,0.5);
+    border-radius: 10px;
+    padding: 28px;
+    transition: all 0.3s;
+  }
+  .feature-card:hover {
+    border-color: var(--cyan);
+    box-shadow: 0 0 30px rgba(0,212,255,0.1);
+    transform: translateY(-4px);
+  }
+  .feature-icon { font-size: 28px; margin-bottom: 12px; }
+  .feature-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; color: white; }
+  .feature-card p { font-size: 14px; color: var(--text-dim); line-height: 1.6; }
+
+  /* FRAMEWORKS */
+  .frameworks {
+    padding: 60px 40px;
+    text-align: center;
+  }
+  .frameworks h2 {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 14px;
+    color: var(--text-dim);
+    margin-bottom: 32px;
+    letter-spacing: 2px;
+  }
+  .framework-logos {
+    display: flex;
+    gap: 32px;
+    justify-content: center;
+    flex-wrap: wrap;
+    opacity: 0.6;
+  }
+  .framework-logos span {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 14px;
+    color: var(--text-dim);
+    padding: 8px 16px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+  }
+
+  /* PRICING */
+  .pricing {
+    padding: 80px 40px;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+  .pricing h2 {
+    text-align: center;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 16px;
+    color: var(--orange);
+    margin-bottom: 12px;
+    letter-spacing: 2px;
+  }
+  .pricing-sub {
+    text-align: center;
+    font-size: 16px;
+    color: var(--text-dim);
+    margin-bottom: 48px;
+  }
+  .pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+  }
+  .price-card {
+    background: rgba(17,24,39,0.6);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(30,58,95,0.5);
+    border-radius: 12px;
+    padding: 32px;
+    text-align: center;
+    transition: all 0.3s;
+    position: relative;
+  }
+  .price-card.featured {
+    border-color: var(--cyan);
+    box-shadow: 0 0 40px rgba(0,212,255,0.15);
+  }
+  .price-card.featured::before {
+    content: 'MOST POPULAR';
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--cyan);
+    color: var(--bg);
+    font-family: 'Press Start 2P', cursive;
+    font-size: 7px;
+    padding: 4px 12px;
+    border-radius: 10px;
+    letter-spacing: 1px;
+  }
+  .price-card:hover { transform: translateY(-4px); }
+  .price-tier {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 10px;
+    color: var(--cyan);
+    letter-spacing: 2px;
+    margin-bottom: 16px;
+  }
+  .price-amount {
+    font-size: 48px;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 4px;
+  }
+  .price-period { font-size: 14px; color: var(--text-dim); margin-bottom: 24px; }
+  .price-features {
+    list-style: none;
+    text-align: left;
+    margin-bottom: 28px;
+  }
+  .price-features li {
+    padding: 6px 0;
+    font-size: 14px;
+    color: var(--text);
+    border-bottom: 1px solid rgba(30,58,95,0.3);
+  }
+  .price-features li::before { content: '\2713 '; color: var(--green); font-weight: bold; margin-right: 8px; }
+  .price-btn {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 14px;
+    text-decoration: none;
+    text-align: center;
+    transition: all 0.2s;
+    border: none;
+    cursor: pointer;
+  }
+  .price-btn.primary { background: var(--cyan); color: var(--bg); }
+  .price-btn.primary:hover { background: white; }
+  .price-btn.secondary { background: transparent; color: var(--cyan); border: 1px solid var(--cyan); }
+  .price-btn.secondary:hover { background: rgba(0,212,255,0.1); }
+
+  /* WAITLIST */
+  .waitlist {
+    padding: 80px 40px;
+    text-align: center;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  .waitlist h2 {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 14px;
+    color: var(--green);
+    margin-bottom: 16px;
+  }
+  .waitlist p { color: var(--text-dim); margin-bottom: 28px; font-size: 16px; }
+  .waitlist-form {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .waitlist-form input {
+    flex: 1;
+    min-width: 250px;
+    padding: 14px 20px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: rgba(17,24,39,0.8);
+    color: var(--text);
+    font-size: 16px;
+    font-family: 'Share Tech Mono', monospace;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .waitlist-form input:focus { border-color: var(--cyan); box-shadow: 0 0 10px rgba(0,212,255,0.2); }
+  .waitlist-form button {
+    padding: 14px 28px;
+    border-radius: 8px;
+    background: var(--green);
+    color: var(--bg);
+    font-weight: 700;
+    font-size: 16px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Inter', sans-serif;
+  }
+  .waitlist-form button:hover { background: white; box-shadow: 0 0 20px rgba(0,255,136,0.4); }
+  #waitlist-msg { margin-top: 12px; font-size: 14px; color: var(--green); display: none; }
+
+  /* FOOTER */
+  footer {
+    padding: 40px;
+    text-align: center;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+  footer a { color: var(--cyan); text-decoration: none; }
+
+  /* GLOW LINE */
+  .glow-line {
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--cyan), var(--orange), var(--green), var(--cyan), transparent);
+    background-size: 200% 100%;
+    animation: glowSlide 6s linear infinite;
+    margin: 0 auto;
+    max-width: 600px;
+  }
+  @keyframes glowSlide { 0%{background-position:0% 0%} 100%{background-position:200% 0%} }
+
+  @media (max-width: 768px) {
+    .hero { padding: 120px 20px 60px; }
+    nav { padding: 12px 20px; }
+    .nav-links a:not(.nav-cta) { display: none; }
+    .pricing-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- STARFIELD -->
+<canvas class="stars" id="starfield"></canvas>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">SOLAR SYSTEM</div>
+  <div class="nav-links">
+    <a href="#features">Features</a>
+    <a href="#pricing">Pricing</a>
+    <a href="https://github.com/roomsterdam/solar-system-agents" target="_blank">GitHub</a>
+    <a href="mission-control.html" class="nav-cta">Live Demo</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge">OPEN SOURCE &bull; MIT LICENSE</div>
+  <h1>MISSION CONTROL FOR YOUR AI AGENTS</h1>
+  <p>A cyberpunk dashboard to monitor your entire AI agent fleet in real-time. Zero dependencies. One config file. Works with any framework.</p>
+  <div class="hero-buttons">
+    <a href="mission-control.html" class="btn-primary">Live Demo</a>
+    <a href="https://github.com/roomsterdam/solar-system-agents" class="btn-secondary" target="_blank">View on GitHub</a>
+  </div>
+</section>
+
+<!-- DEMO GIF -->
+<section class="demo">
+  <img src="mission-control-live.gif" alt="Mission Control Dashboard Demo" loading="lazy">
+</section>
+
+<div class="glow-line"></div>
+
+<!-- FEATURES -->
+<section class="features" id="features">
+  <h2>FEATURES</h2>
+  <div class="feature-grid">
+    <div class="feature-card">
+      <div class="feature-icon">&#9733;</div>
+      <h3>Agent Roster</h3>
+      <p>Live status dots, model info, skill counts, and channel tags for every agent. Grouped by tier with premium card highlights.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">&#9881;</div>
+      <h3>Cron Monitoring</h3>
+      <p>Visual cron job cards with OK/ERR status, last run time, and schedule info. Spot failures instantly.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">&#9889;</div>
+      <h3>System Vitals</h3>
+      <p>RAM gauge, cron donut chart, uptime counter, platform info. Chart.js visualizations update in real-time.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">&#127760;</div>
+      <h3>Solar System View</h3>
+      <p>Each agent is a planet orbiting your gateway. Moons for sub-agents, rings for scheduled tasks. Canvas2D at 60fps.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">&#128225;</div>
+      <h3>Channels & Providers</h3>
+      <p>See which messaging channels and model providers are active. Slack, Telegram, WhatsApp, REST API status at a glance.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">&#128640;</div>
+      <h3>Zero Setup</h3>
+      <p>No npm. No Docker. No database. Clone the repo, open the HTML file. Demo mode works out of the box. Edit config.js to customize.</p>
+    </div>
+  </div>
+</section>
+
+<!-- FRAMEWORKS -->
+<section class="frameworks">
+  <h2>WORKS WITH ANY FRAMEWORK</h2>
+  <div class="framework-logos">
+    <span>CrewAI</span>
+    <span>LangChain</span>
+    <span>AutoGPT</span>
+    <span>OpenAI Assistants</span>
+    <span>Semantic Kernel</span>
+    <span>LangGraph</span>
+    <span>Custom Agents</span>
+  </div>
+</section>
+
+<div class="glow-line"></div>
+
+<!-- PRICING -->
+<section class="pricing" id="pricing">
+  <h2>PRICING</h2>
+  <p class="pricing-sub">Open source core. Hosted pro for teams.</p>
+  <div class="pricing-grid">
+    <div class="price-card">
+      <div class="price-tier">OPEN SOURCE</div>
+      <div class="price-amount">$0</div>
+      <div class="price-period">forever</div>
+      <ul class="price-features">
+        <li>Full Mission Control dashboard</li>
+        <li>Solar System visualization</li>
+        <li>Unlimited agents</li>
+        <li>Config file customization</li>
+        <li>Self-hosted anywhere</li>
+        <li>MIT license</li>
+      </ul>
+      <a href="https://github.com/roomsterdam/solar-system-agents" class="price-btn secondary" target="_blank">Get Started</a>
+    </div>
+    <div class="price-card featured">
+      <div class="price-tier">PRO HOSTED</div>
+      <div class="price-amount">$29</div>
+      <div class="price-period">per month</div>
+      <ul class="price-features">
+        <li>Everything in Open Source</li>
+        <li>Hosted dashboard (your subdomain)</li>
+        <li>Live API connectors</li>
+        <li>Framework adapters (CrewAI, LangChain)</li>
+        <li>Email & Slack alerts</li>
+        <li>30-day history & logs</li>
+        <li>Priority support</li>
+      </ul>
+      <a href="#waitlist" class="price-btn primary">Join Waitlist</a>
+    </div>
+    <div class="price-card">
+      <div class="price-tier">ENTERPRISE</div>
+      <div class="price-amount">$99</div>
+      <div class="price-period">per month</div>
+      <ul class="price-features">
+        <li>Everything in Pro</li>
+        <li>Unlimited team members</li>
+        <li>Custom domain</li>
+        <li>SSO / SAML authentication</li>
+        <li>90-day history & analytics</li>
+        <li>Webhook integrations</li>
+        <li>Dedicated support</li>
+        <li>Custom branding</li>
+      </ul>
+      <a href="#waitlist" class="price-btn secondary">Contact Us</a>
+    </div>
+  </div>
+</section>
+
+<div class="glow-line"></div>
+
+<!-- WAITLIST -->
+<section class="waitlist" id="waitlist">
+  <h2>GET EARLY ACCESS</h2>
+  <p>Be the first to get the hosted Pro version. No spam. Just a launch notification.</p>
+  <form class="waitlist-form" id="waitlist-form">
+    <input type="email" placeholder="your@email.com" required id="waitlist-email">
+    <button type="submit">Join Waitlist</button>
+  </form>
+  <div id="waitlist-msg">You're on the list. We'll notify you at launch.</div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <p>Built by <a href="https://github.com/roomsterdam" target="_blank">AUDAZ.AI</a> &bull; <a href="https://github.com/roomsterdam/solar-system-agents" target="_blank">GitHub</a> &bull; MIT License</p>
+</footer>
+
+<script>
+// STARFIELD
+const canvas = document.getElementById('starfield');
+const ctx = canvas.getContext('2d');
+let stars = [];
+
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  stars = Array.from({length: 200}, () => ({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    r: Math.random() * 1.5 + 0.2,
+    a: Math.random(),
+    da: (Math.random() - 0.5) * 0.01,
+  }));
+}
+resize();
+window.addEventListener('resize', resize);
+
+function drawStars() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  for (const s of stars) {
+    s.a += s.da;
+    if (s.a > 1 || s.a < 0.1) s.da = -s.da;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(200,220,255,${s.a})`;
+    ctx.fill();
+  }
+  requestAnimationFrame(drawStars);
+}
+drawStars();
+
+// WAITLIST (stores to localStorage — replace with real endpoint)
+document.getElementById('waitlist-form').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const email = document.getElementById('waitlist-email').value;
+  const existing = JSON.parse(localStorage.getItem('ssa-waitlist') || '[]');
+  existing.push({ email, time: new Date().toISOString() });
+  localStorage.setItem('ssa-waitlist', JSON.stringify(existing));
+  document.getElementById('waitlist-msg').style.display = 'block';
+  document.getElementById('waitlist-email').value = '';
+  this.querySelector('button').textContent = 'Joined!';
+  this.querySelector('button').disabled = true;
+});
+
+// SMOOTH SCROLL
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    const target = document.querySelector(a.getAttribute('href'));
+    if (target) target.scrollIntoView({ behavior: 'smooth' });
+  });
+});
+</script>
+
+</body>
+</html>
