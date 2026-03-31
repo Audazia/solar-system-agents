@@ -7,7 +7,6 @@
 <meta name="description" content="Cyberpunk mission control dashboard for AI agent fleets. Real-time monitoring, cron jobs, system vitals. Open source.">
 <script src="https://cdn.jsdelivr.net/npm/tsparticles-slim@2.12.0/tsparticles.slim.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="config.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Share+Tech+Mono&display=swap');
@@ -919,10 +918,11 @@
     </div>
   </div>
 
-  <!-- ═══ TAB 2: SOLAR SYSTEM (Three.js 3D) ═══ -->
+  <!-- ═══ TAB 2: SOLAR SYSTEM ═══ -->
   <div class="tab-content" id="tab-solar">
     <div class="solar-layout">
-      <div class="solar-canvas-wrap" id="solarContainer">
+      <div class="solar-canvas-wrap">
+        <canvas id="solarCanvas"></canvas>
         <div class="solar-hud" id="solarHud"></div>
         <div class="solar-info-panel" id="solarInfoPanel"></div>
         <div class="solar-controls">
@@ -931,11 +931,6 @@
           <button class="solar-ctrl-btn active" id="btnLabels">LABELS</button>
         </div>
         <div class="solar-log" id="solarLog"></div>
-        <div id="solarTooltip" style="position:absolute;display:none;background:rgba(10,14,26,0.95);backdrop-filter:blur(10px);border:1px solid rgba(0,212,255,0.4);border-radius:6px;padding:12px 16px;color:#c0d8f0;font-size:13px;max-width:320px;box-shadow:0 0 30px rgba(0,212,255,0.2);z-index:20;pointer-events:none;">
-          <div id="ttName" style="font-family:'Press Start 2P',monospace;font-size:11px;margin-bottom:6px;"></div>
-          <div id="ttRole" style="color:#888;font-size:12px;margin-bottom:4px;"></div>
-          <div id="ttStatus" style="font-size:11px;"></div>
-        </div>
       </div>
       <div class="solar-sidebar" id="solarSidebar">
         <div class="solar-sidebar-title">ORBITAL ROSTER</div>
@@ -1328,352 +1323,395 @@ function drawGauges() {
 drawGauges();
 
 // ═══════════════════════════════════════════════════════════
-// TAB 2: SOLAR SYSTEM (Three.js 3D)
+// TAB 2: SOLAR SYSTEM (Canvas2D)
 // ═══════════════════════════════════════════════════════════
 let solarInited = false;
+let solarAnim = null;
+let solarState = {
+  offsetX: 0, offsetY: 0, zoom: 1,
+  dragging: false, dragStartX: 0, dragStartY: 0,
+  autoRotate: true, showLabels: true,
+  selectedAgent: null, time: 0,
+  stars: [],
+  shootingStars: [],
+};
 
 function initSolarSystem() {
   if (solarInited) return;
   solarInited = true;
-  initSolar3D();
-}
 
-function initSolar3D() {
-  const container = document.getElementById('solarContainer');
+  const canvas = document.getElementById('solarCanvas');
+  const wrap = canvas.parentElement;
+  const ctx = canvas.getContext('2d');
 
-  // Three.js scene
-  const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(60, W / Math.max(H, 400), 0.1, 2000);
-  camera.position.set(0, 45, 70);
-  camera.lookAt(0, 0, 0);
-
-  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
-  renderer.setSize(W, Math.max(H, 400));
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  renderer.setClearColor(0x020208);
-  renderer.domElement.style.cursor = 'grab';
-  container.insertBefore(renderer.domElement, container.firstChild);
-
-  // Starfield
-  const starsGeo = new THREE.BufferGeometry();
-  const starPos = new Float32Array(5000 * 3);
-  const starCol = new Float32Array(5000 * 3);
-  for (let i = 0; i < 5000; i++) {
-    starPos[i*3] = (Math.random()-0.5)*1200;
-    starPos[i*3+1] = (Math.random()-0.5)*1200;
-    starPos[i*3+2] = (Math.random()-0.5)*1200;
-    const b = 0.3+Math.random()*0.7;
-    starCol[i*3] = b; starCol[i*3+1] = b; starCol[i*3+2] = b;
+  function resize() {
+    canvas.width = wrap.clientWidth;
+    canvas.height = wrap.clientHeight;
   }
-  starsGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
-  starsGeo.setAttribute('color', new THREE.BufferAttribute(starCol, 3));
-  scene.add(new THREE.Points(starsGeo, new THREE.PointsMaterial({ size: 0.8, vertexColors: true, transparent: true, opacity: 0.8 })));
+  resize();
+  window.addEventListener('resize', resize);
 
-  // Nebula
-  scene.add(new THREE.Mesh(
-    new THREE.SphereGeometry(400, 32, 32),
-    new THREE.MeshBasicMaterial({ color: 0x0a1030, side: THREE.BackSide, transparent: true, opacity: 0.5 })
-  ));
-
-  // Orbit radii — spread agents across 4 tiers
-  const tiers = { command: 1, operations: 2, support: 3 };
-  const ORBIT_RADII = [0, 18, 34, 50, 65];
-  const ORBIT_SPEEDS = [0, 0.03, 0.02, 0.012, 0.006];
-
-  // Orbit rings
-  for (let i = 1; i <= 3; i++) {
-    const rGeo = new THREE.RingGeometry(ORBIT_RADII[i]-0.05, ORBIT_RADII[i]+0.05, 128);
-    const rMat = new THREE.MeshBasicMaterial({ color: i<=1?0x1a3a5f:i<=2?0x122a4f:0x0a1a3f, transparent: true, opacity: 0.3, side: THREE.DoubleSide });
-    const r = new THREE.Mesh(rGeo, rMat);
-    r.rotation.x = -Math.PI/2;
-    scene.add(r);
-  }
-
-  // Central Sun
-  const sunMat = new THREE.MeshBasicMaterial({ color: 0xffd700 });
-  const sun = new THREE.Mesh(new THREE.SphereGeometry(3, 32, 32), sunMat);
-  scene.add(sun);
-  scene.add(new THREE.Mesh(new THREE.SphereGeometry(5, 32, 32), new THREE.MeshBasicMaterial({ color: 0xffd700, transparent: true, opacity: 0.15 })));
-  scene.add(new THREE.Mesh(new THREE.SphereGeometry(7, 32, 32), new THREE.MeshBasicMaterial({ color: 0xff8800, transparent: true, opacity: 0.05 })));
-
-  // Agent planets
-  const agentMeshes = {};
-  const agentLabels3D = [];
-  let showLabels3D = true;
-
-  // Assign orbit tiers and spread angles
-  const tierCounts = { 1: 0, 2: 0, 3: 0 };
-  C.agents.forEach(a => {
-    const t = tiers[a.tier] || 2;
-    tierCounts[t]++;
-  });
-  const tierIdx = { 1: 0, 2: 0, 3: 0 };
-
-  C.agents.forEach(a => {
-    const orbitTier = tiers[a.tier] || 2;
-    const angleStep = (Math.PI * 2) / (tierCounts[orbitTier] || 1);
-    const baseAngle = tierIdx[orbitTier] * angleStep;
-    tierIdx[orbitTier]++;
-
-    const group = new THREE.Group();
-    const colorHex = parseInt(a.color.replace('#',''), 16);
-    const planetSize = (a.size || 8) * 0.18;
-
-    // Planet sphere
-    const mesh = new THREE.Mesh(
-      new THREE.SphereGeometry(planetSize, 24, 24),
-      new THREE.MeshBasicMaterial({ color: colorHex })
-    );
-    group.add(mesh);
-
-    // Atmosphere glow
-    group.add(new THREE.Mesh(
-      new THREE.SphereGeometry(planetSize * 1.6, 16, 16),
-      new THREE.MeshBasicMaterial({ color: colorHex, transparent: true, opacity: 0.15 })
-    ));
-
-    // Rings for Saturn-type
-    if (a.rings) {
-      const pRing = new THREE.Mesh(
-        new THREE.RingGeometry(planetSize*1.6, planetSize*2.4, 32),
-        new THREE.MeshBasicMaterial({ color: colorHex, transparent: true, opacity: 0.3, side: THREE.DoubleSide })
-      );
-      pRing.rotation.x = Math.PI/3;
-      group.add(pRing);
-    }
-
-    // Position
-    const radius = ORBIT_RADII[orbitTier];
-    group.position.set(Math.cos(baseAngle)*radius, (Math.random()-0.5)*3, Math.sin(baseAngle)*radius);
-    scene.add(group);
-
-    // Cron satellites
-    const agentCrons = C.crons.filter(cr => cr.agent.toUpperCase() === a.name.toUpperCase());
-    const satMeshes = [];
-    agentCrons.forEach((cr, ci) => {
-      const satOrbit = planetSize + 1.5 + ci * 1.2;
-      const satColor = cr.status === 'ok' ? 0x00ff88 : cr.status === 'error' ? 0xff3355 : 0x5a7a9a;
-      const satMesh = new THREE.Mesh(
-        new THREE.SphereGeometry(0.2, 8, 8),
-        new THREE.MeshBasicMaterial({ color: satColor })
-      );
-      const satGlow = new THREE.Mesh(
-        new THREE.SphereGeometry(0.4, 8, 8),
-        new THREE.MeshBasicMaterial({ color: satColor, transparent: true, opacity: 0.2 })
-      );
-      group.add(satMesh);
-      group.add(satGlow);
-      satMeshes.push({ mesh: satMesh, glow: satGlow, orbit: satOrbit, speed: 0.5 + ci * 0.3, idx: ci });
+  // Generate stars
+  for (let i = 0; i < 300; i++) {
+    solarState.stars.push({
+      x: Math.random() * 4000 - 2000,
+      y: Math.random() * 4000 - 2000,
+      size: Math.random() * 2 + 0.5,
+      twinkle: Math.random() * Math.PI * 2,
+      speed: Math.random() * 0.02 + 0.005,
     });
-
-    agentMeshes[a.id] = { group, agent: a, baseAngle, mesh, orbitTier, satellites: satMeshes };
-
-    // Label sprite
-    const labelCanvas = document.createElement('canvas');
-    labelCanvas.width = 256; labelCanvas.height = 64;
-    const lctx = labelCanvas.getContext('2d');
-    lctx.font = 'bold 18px Share Tech Mono';
-    lctx.fillStyle = a.color;
-    lctx.textAlign = 'center';
-    lctx.fillText(a.name, 128, 24);
-    lctx.font = '12px Share Tech Mono';
-    lctx.fillStyle = '#888888';
-    lctx.fillText(a.role.substring(0, 30), 128, 44);
-    const tex = new THREE.CanvasTexture(labelCanvas);
-    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, opacity: 0.8 }));
-    sprite.scale.set(10, 2.5, 1);
-    sprite.position.y = planetSize + 3;
-    group.add(sprite);
-    agentLabels3D.push(sprite);
-  });
-
-  // Message beams (shooting stars between planets)
-  const activeBeams = [];
-  function sendBeam(fromId, toId) {
-    const from = agentMeshes[fromId], to = agentMeshes[toId];
-    if (!from || !to) return;
-    const start = from.group.position.clone();
-    const end = to.group.position.clone();
-    const mid = start.clone().add(end).multiplyScalar(0.5);
-    mid.y += 8 + Math.random()*5;
-    const curve = new THREE.QuadraticBezierCurve3(start, mid, end);
-    const colorHex = parseInt(from.agent.color.replace('#',''), 16);
-    const geo = new THREE.BufferGeometry().setFromPoints(curve.getPoints(40));
-    const mat = new THREE.LineBasicMaterial({ color: colorHex, transparent: true, opacity: 0.8 });
-    const line = new THREE.Line(geo, mat);
-    scene.add(line);
-    const particle = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 8), new THREE.MeshBasicMaterial({ color: 0xffffff }));
-    const particleGlow = new THREE.Mesh(new THREE.SphereGeometry(0.8, 8, 8), new THREE.MeshBasicMaterial({ color: colorHex, transparent: true, opacity: 0.3 }));
-    scene.add(particle); scene.add(particleGlow);
-    activeBeams.push({ line, particle, particleGlow, curve, progress: 0, speed: 0.008+Math.random()*0.006, fadeStart: Date.now()+2000 });
   }
 
-  // Periodic beams
-  setInterval(() => {
-    const ids = Object.keys(agentMeshes);
-    if (ids.length >= 2) {
-      const from = ids[Math.floor(Math.random()*ids.length)];
-      let to = from;
-      while (to === from) to = ids[Math.floor(Math.random()*ids.length)];
-      sendBeam(from, to);
-    }
-  }, 2500);
+  // Build HUD
+  const active = C.agents.filter(a => a.status === 'active').length;
+  const totalTasks = C.crons.length * 3 + Math.floor(Math.random() * 20);
+  $('#solarHud').innerHTML = `AGENTS: <span>${C.agents.length}</span> &nbsp; ACTIVE: <span>${active}</span> &nbsp; TASKS/24H: <span>${totalTasks}</span> &nbsp; UPTIME: <span id="solarUptime">${getUptime()}</span> &nbsp; <span id="solarClock">${new Date().toTimeString().slice(0,8)}</span>`;
 
-  // Camera controls
-  let cameraAngle = 0.3, cameraHeight = 45, cameraDist = 70;
-  let autoRotate3D = true, isDragging3D = false, lastMouse3D = { x:0, y:0 };
-
-  renderer.domElement.addEventListener('mousedown', e => { isDragging3D = true; lastMouse3D = { x: e.clientX, y: e.clientY }; renderer.domElement.style.cursor = 'grabbing'; });
-  renderer.domElement.addEventListener('mousemove', e => {
-    if (isDragging3D) {
-      cameraAngle += (e.clientX - lastMouse3D.x) * 0.005;
-      cameraHeight += (e.clientY - lastMouse3D.y) * 0.3;
-      cameraHeight = Math.max(5, Math.min(100, cameraHeight));
-      lastMouse3D = { x: e.clientX, y: e.clientY };
-    }
-    // Tooltip
-    const mouse = new THREE.Vector2((e.clientX / renderer.domElement.clientWidth)*2-1, -(e.clientY / renderer.domElement.clientHeight)*2+1);
-    const raycaster = new THREE.Raycaster();
-    raycaster.setFromCamera(mouse, camera);
-    let found = null;
-    for (const [id, data] of Object.entries(agentMeshes)) {
-      if (raycaster.intersectObject(data.mesh).length > 0) { found = data; break; }
-    }
-    const tt = document.getElementById('solarTooltip');
-    if (found) {
-      document.getElementById('ttName').textContent = found.agent.name;
-      document.getElementById('ttName').style.color = found.agent.color;
-      document.getElementById('ttRole').textContent = found.agent.role;
-      document.getElementById('ttStatus').innerHTML = `<span style="color:${found.agent.status==='active'?'#00ff88':'#ffd700'}">${found.agent.status.toUpperCase()}</span> | ${found.agent.model}`;
-      tt.style.display = 'block';
-      const rect = container.getBoundingClientRect();
-      tt.style.left = (e.clientX - rect.left + 15) + 'px';
-      tt.style.top = (e.clientY - rect.top - 10) + 'px';
-    } else { tt.style.display = 'none'; }
-  });
-  renderer.domElement.addEventListener('mouseup', () => { isDragging3D = false; renderer.domElement.style.cursor = 'grab'; });
-  renderer.domElement.addEventListener('wheel', e => { cameraDist += e.deltaY*0.05; cameraDist = Math.max(15, Math.min(150, cameraDist)); e.preventDefault(); }, { passive: false });
-
-  // Controls buttons
-  document.getElementById('btnResetCam').addEventListener('click', () => { cameraAngle = 0.3; cameraHeight = 45; cameraDist = 70; });
-  document.getElementById('btnAutoRotate').addEventListener('click', () => {
-    autoRotate3D = !autoRotate3D;
-    document.getElementById('btnAutoRotate').classList.toggle('active', autoRotate3D);
-  });
-  document.getElementById('btnLabels').addEventListener('click', () => {
-    showLabels3D = !showLabels3D;
-    agentLabels3D.forEach(s => { s.visible = showLabels3D; });
-    document.getElementById('btnLabels').classList.toggle('active', showLabels3D);
-  });
-
-  // HUD
-  const active3D = C.agents.filter(a => a.status === 'active').length;
-  document.getElementById('solarHud').innerHTML = `AGENTS: <span>${C.agents.length}</span> &nbsp; ACTIVE: <span>${active3D}</span> &nbsp; CRONS: <span>${C.crons.length}</span>`;
-
-  // Orbital roster sidebar
+  // Build orbital roster
   let olHtml = '';
   C.agents.forEach(a => {
-    const badge = a.status==='active' ? '<span class="orbital-badge active-badge">ACTIVE</span>' : '<span class="orbital-badge idle-badge">IDLE</span>';
-    olHtml += `<div class="orbital-item" data-agent="${a.id}"><span class="status-dot ${statusDotClass(a)}"></span><span class="planet-name">${a.name}</span>${badge}</div>`;
+    const badge = a.status === 'active' ? '<span class="orbital-badge active-badge">ACTIVE</span>' : '<span class="orbital-badge idle-badge">IDLE</span>';
+    olHtml += `<div class="orbital-item" data-agent="${a.id}"><span class="status-dot ${statusDotClass(a)}"></span><span class="planet-name">${a.planet || a.name}</span>${badge}</div>`;
   });
-  document.getElementById('orbitalList').innerHTML = olHtml;
+  $('#orbitalList').innerHTML = olHtml;
+
+  // Orbital item clicks
+  $$('.orbital-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const ag = C.agents.find(a => a.id === item.dataset.agent);
+      if (ag) showSolarInfo(ag);
+    });
+  });
 
   // Solar log
   function addLogLine() {
-    const ag = C.agents[Math.floor(Math.random()*C.agents.length)];
+    const ag = C.agents[Math.floor(Math.random() * C.agents.length)];
     const line = document.createElement('div');
     line.className = 'solar-log-line';
     line.innerHTML = `<span class="agent-label">[${ag.name}]</span> ${randomMsg()}`;
-    const log = document.getElementById('solarLog');
+    const log = $('#solarLog');
     log.appendChild(line);
     if (log.children.length > 3) log.removeChild(log.firstChild);
   }
   addLogLine();
   setInterval(addLogLine, 4000);
 
-  // Resize
-  window.addEventListener('resize', () => {
-    const nw = container.clientWidth - 240, nh = container.clientHeight;
-    camera.aspect = nw / Math.max(nh, 400);
-    camera.updateProjectionMatrix();
-    renderer.setSize(nw, Math.max(nh, 400));
+  // Mouse interactions
+  canvas.addEventListener('wheel', e => {
+    e.preventDefault();
+    const zoomDelta = e.deltaY > 0 ? 0.9 : 1.1;
+    solarState.zoom = Math.max(0.2, Math.min(5, solarState.zoom * zoomDelta));
+  });
+  canvas.addEventListener('mousedown', e => {
+    solarState.dragging = true;
+    solarState.dragStartX = e.clientX - solarState.offsetX;
+    solarState.dragStartY = e.clientY - solarState.offsetY;
+  });
+  canvas.addEventListener('mousemove', e => {
+    if (solarState.dragging) {
+      solarState.offsetX = e.clientX - solarState.dragStartX;
+      solarState.offsetY = e.clientY - solarState.dragStartY;
+    }
+  });
+  canvas.addEventListener('mouseup', () => { solarState.dragging = false; });
+  canvas.addEventListener('mouseleave', () => { solarState.dragging = false; });
+
+  // Click to select planet
+  canvas.addEventListener('click', e => {
+    const rect = canvas.getBoundingClientRect();
+    const mx = (e.clientX - rect.left - canvas.width/2 - solarState.offsetX) / solarState.zoom;
+    const my = (e.clientY - rect.top - canvas.height/2 - solarState.offsetY) / solarState.zoom;
+
+    let closest = null, closestDist = Infinity;
+    C.agents.forEach(a => {
+      const angle = solarState.time * (a.speed || 0.005);
+      const ox = Math.cos(angle) * (a.orbit || 100);
+      const oy = Math.sin(angle) * (a.orbit || 100) * 0.5;
+      const dx = mx - ox, dy = my - oy;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      if (dist < (a.size||8) + 10 && dist < closestDist) {
+        closest = a;
+        closestDist = dist;
+      }
+    });
+    if (closest) showSolarInfo(closest);
+    else { solarState.selectedAgent = null; $('#solarInfoPanel').classList.remove('visible'); }
   });
 
-  // Animation loop
-  const clock3D = new THREE.Clock();
-  function animate3D() {
-    requestAnimationFrame(animate3D);
-    const t = clock3D.getElapsedTime();
+  // Controls
+  $('#btnResetCam').addEventListener('click', () => {
+    solarState.offsetX = 0;
+    solarState.offsetY = 0;
+    solarState.zoom = 1;
+  });
+  $('#btnAutoRotate').addEventListener('click', () => {
+    solarState.autoRotate = !solarState.autoRotate;
+    $('#btnAutoRotate').classList.toggle('active', solarState.autoRotate);
+  });
+  $('#btnLabels').addEventListener('click', () => {
+    solarState.showLabels = !solarState.showLabels;
+    $('#btnLabels').classList.toggle('active', solarState.showLabels);
+  });
 
-    // Orbit planets
-    for (const [id, data] of Object.entries(agentMeshes)) {
-      const radius = ORBIT_RADII[data.orbitTier];
-      const speed = ORBIT_SPEEDS[data.orbitTier];
-      const angle = data.baseAngle + t * speed;
-      data.group.position.x = Math.cos(angle) * radius;
-      data.group.position.z = Math.sin(angle) * radius;
-      data.group.position.y = Math.sin(t * 0.5 + data.baseAngle) * 1.5;
+  // Update HUD clock
+  setInterval(() => {
+    const el = document.getElementById('solarUptime');
+    if (el) el.textContent = getUptime();
+    const cl = document.getElementById('solarClock');
+    if (cl) cl.textContent = new Date().toTimeString().slice(0,8);
+  }, 1000);
 
-      // Animate cron satellites
-      data.satellites.forEach(sat => {
-        const sAngle = t * sat.speed + sat.idx * 1.2;
-        sat.mesh.position.set(Math.cos(sAngle)*sat.orbit, Math.sin(sAngle*0.7)*sat.orbit*0.3, Math.sin(sAngle)*sat.orbit);
-        sat.glow.position.copy(sat.mesh.position);
+  // ANIMATION LOOP
+  function drawFrame() {
+    solarAnim = requestAnimationFrame(drawFrame);
+    const w = canvas.width, h = canvas.height;
+    ctx.clearRect(0, 0, w, h);
+
+    // Background
+    ctx.fillStyle = '#050810';
+    ctx.fillRect(0, 0, w, h);
+
+    const centerX = w / 2 + solarState.offsetX;
+    const centerY = h / 2 + solarState.offsetY;
+    const zm = solarState.zoom;
+
+    // Stars
+    solarState.stars.forEach(star => {
+      star.twinkle += star.speed;
+      const alpha = 0.4 + 0.6 * Math.abs(Math.sin(star.twinkle));
+      const sx = centerX + star.x * zm * 0.3;
+      const sy = centerY + star.y * zm * 0.3;
+      if (sx < -10 || sx > w+10 || sy < -10 || sy > h+10) return;
+      ctx.beginPath();
+      ctx.arc(sx, sy, star.size * zm * 0.3, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(200,220,255,${alpha})`;
+      ctx.fill();
+    });
+
+    // SUN
+    const sunR = 45 * zm;
+    // Corona glow
+    const coronaPulse = 1 + 0.15 * Math.sin(solarState.time * 0.05);
+    const corona = ctx.createRadialGradient(centerX, centerY, sunR * 0.5, centerX, centerY, sunR * 3 * coronaPulse);
+    corona.addColorStop(0, 'rgba(255,215,0,0.3)');
+    corona.addColorStop(0.5, 'rgba(255,160,0,0.1)');
+    corona.addColorStop(1, 'rgba(255,100,0,0)');
+    ctx.fillStyle = corona;
+    ctx.fillRect(centerX - sunR*4, centerY - sunR*4, sunR*8, sunR*8);
+    // Sun body
+    const sunGrad = ctx.createRadialGradient(centerX - sunR*0.2, centerY - sunR*0.2, sunR*0.1, centerX, centerY, sunR);
+    sunGrad.addColorStop(0, '#fffbe0');
+    sunGrad.addColorStop(0.5, '#ffd700');
+    sunGrad.addColorStop(1, '#ff8c00');
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, sunR, 0, Math.PI * 2);
+    ctx.fillStyle = sunGrad;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    if (solarState.autoRotate) solarState.time += 1;
+
+    // ── SHOOTING STARS (agent activity beams between planets) ──
+    // Spawn new shooting stars
+    if (Math.random() < 0.04 && C.agents.length > 1) {
+      const fromA = C.agents[Math.floor(Math.random() * C.agents.length)];
+      let toA = fromA;
+      while (toA === fromA) toA = C.agents[Math.floor(Math.random() * C.agents.length)];
+      const fAngle = solarState.time * (fromA.speed || 0.005);
+      const fOrbit = (fromA.orbit || 100) * zm;
+      const tAngle = solarState.time * (toA.speed || 0.005);
+      const tOrbit = (toA.orbit || 100) * zm;
+      solarState.shootingStars.push({
+        fx: centerX + Math.cos(fAngle) * fOrbit,
+        fy: centerY + Math.sin(fAngle) * fOrbit * 0.5,
+        tx: centerX + Math.cos(tAngle) * tOrbit,
+        ty: centerY + Math.sin(tAngle) * tOrbit * 0.5,
+        progress: 0,
+        speed: 0.015 + Math.random() * 0.02,
+        color: fromA.color,
+        agent: fromA.name,
       });
     }
+    // Draw & update shooting stars
+    solarState.shootingStars = solarState.shootingStars.filter(ss => {
+      ss.progress += ss.speed;
+      if (ss.progress > 1) return false;
+      const cx = ss.fx + (ss.tx - ss.fx) * ss.progress;
+      const cy = ss.fy + (ss.ty - ss.fy) * ss.progress;
+      const tailLen = 0.08;
+      const tx = ss.fx + (ss.tx - ss.fx) * Math.max(0, ss.progress - tailLen);
+      const ty = ss.fy + (ss.ty - ss.fy) * Math.max(0, ss.progress - tailLen);
+      const grad = ctx.createLinearGradient(tx, ty, cx, cy);
+      grad.addColorStop(0, ss.color + '00');
+      grad.addColorStop(0.5, ss.color + 'aa');
+      grad.addColorStop(1, '#ffffff');
+      ctx.beginPath();
+      ctx.moveTo(tx, ty);
+      ctx.lineTo(cx, cy);
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = 2 * zm;
+      ctx.stroke();
+      // Head glow
+      ctx.beginPath();
+      ctx.arc(cx, cy, 3 * zm, 0, Math.PI * 2);
+      ctx.fillStyle = '#ffffffcc';
+      ctx.fill();
+      return true;
+    });
 
-    // Sun pulse
-    sun.scale.setScalar(1 + Math.sin(t*2)*0.05);
+    // ── Build cron-to-agent map for satellites ──
+    const cronsByAgent = {};
+    C.crons.forEach((cr, i) => {
+      const agentName = cr.agent.toUpperCase();
+      if (!cronsByAgent[agentName]) cronsByAgent[agentName] = [];
+      cronsByAgent[agentName].push({ ...cr, _idx: i });
+    });
 
-    // Camera
-    if (autoRotate3D && !isDragging3D) cameraAngle += 0.002;
-    camera.position.x = Math.cos(cameraAngle) * cameraDist;
-    camera.position.z = Math.sin(cameraAngle) * cameraDist;
-    camera.position.y = cameraHeight;
-    camera.lookAt(0, 0, 0);
+    // ── Draw orbits, planets, cron satellites, moons, rings ──
+    C.agents.forEach(a => {
+      const orbitR = (a.orbit || 100) * zm;
+      const orbitRY = orbitR * 0.5;
 
-    // Animate beams
-    for (let i = activeBeams.length-1; i >= 0; i--) {
-      const b = activeBeams[i];
-      b.progress += b.speed;
-      if (b.progress >= 1) b.progress = 1;
-      const point = b.curve.getPoint(b.progress);
-      b.particle.position.copy(point);
-      b.particleGlow.position.copy(point);
-      const age = Date.now() - b.fadeStart;
-      if (age > 0) {
-        const fade = Math.max(0, 1 - age/2000);
-        b.line.material.opacity = fade*0.6;
-        b.particle.material.opacity = fade;
-        b.particleGlow.material.opacity = fade*0.3;
-        if (fade <= 0) {
-          scene.remove(b.line); scene.remove(b.particle); scene.remove(b.particleGlow);
-          b.line.geometry.dispose(); b.particle.geometry.dispose(); b.particleGlow.geometry.dispose();
-          activeBeams.splice(i, 1);
-        }
+      // Orbit path
+      ctx.beginPath();
+      ctx.ellipse(centerX, centerY, orbitR, orbitRY, 0, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(30,58,95,0.3)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // Planet position
+      const angle = solarState.time * (a.speed || 0.005);
+      const px = centerX + Math.cos(angle) * orbitR;
+      const py = centerY + Math.sin(angle) * orbitRY;
+      const planetR = (a.size || 8) * zm * 1.4;
+
+      // Orbital trail
+      ctx.beginPath();
+      ctx.ellipse(centerX, centerY, orbitR, orbitRY, 0, angle - 0.5, angle);
+      ctx.strokeStyle = a.color + '44';
+      ctx.lineWidth = 3 * zm;
+      ctx.stroke();
+
+      // Rings (Saturn-type)
+      if (a.rings) {
+        ctx.beginPath();
+        ctx.ellipse(px, py, planetR * 2.2, planetR * 0.5, 0.3, 0, Math.PI * 2);
+        ctx.strokeStyle = a.color + '66';
+        ctx.lineWidth = 4 * zm;
+        ctx.stroke();
       }
-    }
 
-    // Stars twinkle
-    for (let i = 0; i < 20; i++) {
-      const idx = Math.floor(Math.random()*5000);
-      starCol[idx*3] = 0.3+Math.random()*0.7;
-    }
-    starsGeo.attributes.color.needsUpdate = true;
+      // Planet glow
+      const glow = ctx.createRadialGradient(px, py, planetR * 0.5, px, py, planetR * 3);
+      glow.addColorStop(0, a.color + '44');
+      glow.addColorStop(1, a.color + '00');
+      ctx.fillStyle = glow;
+      ctx.fillRect(px - planetR*4, py - planetR*4, planetR*8, planetR*8);
 
-    renderer.render(scene, camera);
+      // Planet body
+      const pGrad = ctx.createRadialGradient(px - planetR*0.3, py - planetR*0.3, planetR*0.1, px, py, planetR);
+      pGrad.addColorStop(0, '#ffffff55');
+      pGrad.addColorStop(0.3, a.color);
+      pGrad.addColorStop(1, a.color + '88');
+      ctx.beginPath();
+      ctx.arc(px, py, planetR, 0, Math.PI * 2);
+      ctx.fillStyle = pGrad;
+      ctx.fill();
+
+      // Selected highlight
+      if (solarState.selectedAgent === a.id) {
+        ctx.beginPath();
+        ctx.arc(px, py, planetR + 5*zm, 0, Math.PI*2);
+        ctx.strokeStyle = '#00d4ff';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([4,4]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      // ── CRON SATELLITES (small dots orbiting each planet) ──
+      const agentCrons = cronsByAgent[a.name.toUpperCase()] || [];
+      agentCrons.forEach((cr, ci) => {
+        const satOrbit = (planetR + 12 * zm) + ci * 8 * zm;
+        const satSpeed = 0.02 + ci * 0.008;
+        const satAngle = solarState.time * satSpeed + ci * 1.2;
+        const sx = px + Math.cos(satAngle) * satOrbit;
+        const sy = py + Math.sin(satAngle) * satOrbit * 0.7;
+        const satR = 2.5 * zm;
+        const satColor = cr.status === 'ok' ? '#00ff88' : cr.status === 'error' ? '#ff3355' : '#5a7a9a';
+        // Satellite orbit line
+        ctx.beginPath();
+        ctx.ellipse(px, py, satOrbit, satOrbit * 0.7, 0, 0, Math.PI * 2);
+        ctx.strokeStyle = satColor + '18';
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+        // Satellite dot
+        ctx.beginPath();
+        ctx.arc(sx, sy, satR, 0, Math.PI * 2);
+        ctx.fillStyle = satColor;
+        ctx.fill();
+        // Satellite glow
+        ctx.beginPath();
+        ctx.arc(sx, sy, satR * 2.5, 0, Math.PI * 2);
+        ctx.fillStyle = satColor + '22';
+        ctx.fill();
+        // Satellite label
+        if (solarState.showLabels && zm > 0.6) {
+          ctx.font = `${Math.max(6*zm, 5)}px 'Share Tech Mono'`;
+          ctx.fillStyle = satColor + 'aa';
+          ctx.textAlign = 'center';
+          ctx.fillText(cr.name.substring(0, 15), sx, sy + satR + 7*zm);
+        }
+      });
+
+      // Moons (from config)
+      if (a.moons) {
+        a.moons.forEach(moon => {
+          const mAngle = solarState.time * (moon.speed || 0.03);
+          const mOrbit = (moon.orbit || 20) * zm;
+          const mx = px + Math.cos(mAngle) * mOrbit;
+          const my = py + Math.sin(mAngle) * mOrbit * 0.6;
+          const mr = (moon.size || 3) * zm * 0.8;
+          ctx.beginPath();
+          ctx.arc(mx, my, mr, 0, Math.PI * 2);
+          ctx.fillStyle = moon.color || '#aaa';
+          ctx.fill();
+          if (solarState.showLabels) {
+            ctx.font = `${Math.max(8*zm, 6)}px 'Share Tech Mono'`;
+            ctx.fillStyle = '#8899aa';
+            ctx.textAlign = 'center';
+            ctx.fillText(moon.name, mx, my + mr + 10*zm);
+          }
+        });
+      }
+
+      // Labels
+      if (solarState.showLabels) {
+        ctx.font = `bold ${Math.max(11*zm, 8)}px 'Press Start 2P'`;
+        ctx.fillStyle = '#c0d8f0';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillText(a.name, px, py + planetR + 8*zm);
+        ctx.font = `${Math.max(9*zm, 7)}px 'Share Tech Mono'`;
+        ctx.fillStyle = '#5a7a9a';
+        ctx.fillText(a.role, px, py + planetR + 22*zm);
+        ctx.textBaseline = 'alphabetic';
+      }
+    });
   }
-  animate3D();
+  drawFrame();
 }
 
 function showSolarInfo(agent) {
+  solarState.selectedAgent = agent.id;
   const st = agentState[agent.id];
   const successRate = Math.floor(80 + Math.random() * 18);
   const tasks24 = Math.floor(Math.random() * 50) + 5;
-  const panel = document.getElementById('solarInfoPanel');
+  const panel = $('#solarInfoPanel');
   panel.innerHTML = `
-    <div class="solar-info-name" style="color:${agent.color}">${agent.name}</div>
-    <div class="solar-info-role">${agent.planet || agent.name} — ${agent.role}</div>
+    <div class="solar-info-name">${agent.planet || agent.name}</div>
+    <div class="solar-info-role">${agent.role}</div>
+    <div class="solar-info-row"><span class="label">Agent</span><span class="value">${agent.name}</span></div>
     <div class="solar-info-row"><span class="label">Model</span><span class="value">${agent.model}</span></div>
     <div class="solar-info-row"><span class="label">Status</span><span class="value" style="color:${agent.status==='active'?'var(--green)':'var(--yellow)'}">${agent.status.toUpperCase()}</span></div>
     <div class="solar-info-row"><span class="label">Tasks (24h)</span><span class="value">${tasks24}</span></div>
@@ -1683,7 +1721,6 @@ function showSolarInfo(agent) {
   `;
   panel.classList.add('visible');
 }
-
 
 // ═══════════════════════════════════════════════════════════
 // TAB 3: QUEST LOG
