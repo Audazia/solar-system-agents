@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MISSION CONTROL — AI Agent Dashboard</title>
+<meta name="description" content="Cyberpunk mission control dashboard for AI agent fleets. Real-time monitoring, cron jobs, system vitals. Open source.">
+<script src="https://cdn.jsdelivr.net/npm/tsparticles-slim@2.12.0/tsparticles.slim.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="config.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Share+Tech+Mono&display=swap');
+
+  :root {
+    --bg-dark: #0a0e1a;
+    --bg-panel: #111827;
+    --bg-panel-alt: #0d1525;
+    --border: #1e3a5f;
+    --cyan: #00d4ff;
+    --cyan-dim: #0088aa;
+    --orange: #ff6b2b;
+    --orange-dim: #a04010;
+    --green: #00ff88;
+    --red: #ff3355;
+    --yellow: #ffd700;
+    --text: #c0d8f0;
+    --text-dim: #5a7a9a;
+    --pixel-shadow: 2px 2px 0px rgba(0,0,0,0.5);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg-dark);
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    overflow-x: hidden;
+    min-height: 100vh;
+  }
+
+  #tsparticles { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 0; }
+
+  body::after {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.05) 2px, rgba(0,0,0,0.05) 4px);
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  .top-bar {
+    background: linear-gradient(180deg, rgba(26,39,68,0.85) 0%, rgba(17,24,39,0.9) 100%);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 2px solid var(--cyan);
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 4px 30px rgba(0,212,255,0.15);
+    position: relative;
+    z-index: 10;
+  }
+  .top-bar-left { display: flex; align-items: center; gap: 16px; }
+  .logo-pixel { font-family: 'Press Start 2P', cursive; font-size: 11px; color: var(--cyan); text-shadow: 0 0 10px rgba(0,212,255,0.5), var(--pixel-shadow); letter-spacing: 2px; }
+  .logo-sub { font-family: 'Press Start 2P', cursive; font-size: 7px; color: var(--orange); text-shadow: 0 0 8px rgba(255,107,43,0.4); letter-spacing: 1px; }
+  .top-bar-center { font-family: 'Press Start 2P', cursive; font-size: 9px; color: var(--text-dim); letter-spacing: 3px; }
+  .top-bar-right { display: flex; align-items: center; gap: 20px; font-size: 12px; }
+
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; animation: pulse 2s infinite; }
+  .status-dot.green { background: var(--green); box-shadow: 0 0 8px var(--green), 0 0 16px rgba(0,255,136,0.3); }
+  .status-dot.red { background: var(--red); box-shadow: 0 0 8px var(--red); }
+  .status-dot.yellow { background: var(--yellow); box-shadow: 0 0 8px var(--yellow); }
+  .status-dot.orange { background: var(--orange); box-shadow: 0 0 8px var(--orange); }
+  .status-dot.dim { background: var(--text-dim); box-shadow: none; animation: none; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+  .nav-tabs {
+    display: flex;
+    justify-content: center;
+    background: rgba(13,21,40,0.85);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 2px solid rgba(0,212,255,0.15);
+    gap: 0;
+    position: relative;
+    z-index: 10;
+  }
+  .nav-tab {
+    padding: 10px 24px;
+    cursor: pointer;
+    color: var(--text-dim);
+    font-family: 'Press Start 2P', cursive;
+    font-size: 7px;
+    letter-spacing: 1px;
+    transition: 0.2s;
+    border-bottom: 2px solid transparent;
+    user-select: none;
+  }
+  .nav-tab:hover { color: var(--cyan); }
+  .nav-tab.active { color: var(--cyan); border-bottom-color: var(--cyan); text-shadow: 0 0 12px rgba(0,212,255,0.4); }
+  .nav-tab.active::after { content: ''; position: absolute; bottom: -2px; left: 20%; right: 20%; height: 2px; background: var(--cyan); box-shadow: 0 0 8px var(--cyan); }
+  .view-page { display: none; }
+  .view-page.active { display: block; }
+  .embed-frame { width: 100%; height: calc(100vh - 100px); border: none; background: #0b1120; }
+
+  .main-grid {
+    display: grid;
+    grid-template-columns: 280px 1fr 300px;
+    grid-template-rows: auto 1fr;
+    gap: 0;
+    height: calc(100vh - 120px);
+  }
+
+  .panel {
+    background: rgba(17,24,39,0.75);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(30,58,95,0.6);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    z-index: 5;
+  }
+  .panel-header {
+    background: linear-gradient(90deg, rgba(0,212,255,0.15) 0%, transparent 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 14px;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 8px;
+    color: var(--cyan);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .panel-header.orange-header { background: linear-gradient(90deg, rgba(255,107,43,0.15) 0%, transparent 100%); color: var(--orange); }
+  .panel-header.green-header { background: linear-gradient(90deg, rgba(0,255,136,0.15) 0%, transparent 100%); color: var(--green); }
+  .panel-body { padding: 8px; overflow-y: auto; flex: 1; }
+  .panel-body::-webkit-scrollbar { width: 4px; }
+  .panel-body::-webkit-scrollbar-track { background: var(--bg-dark); }
+  .panel-body::-webkit-scrollbar-thumb { background: var(--cyan-dim); border-radius: 2px; }
+  .left-panel { grid-row: 1 / 3; }
+
+  .agent-card {
+    background: rgba(13,21,37,0.7);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(30,58,95,0.5);
+    border-left: 3px solid var(--cyan-dim);
+    padding: 8px 10px;
+    margin-bottom: 6px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+  }
+  .agent-card:hover {
+    border-left-color: var(--cyan);
+    background: rgba(0,212,255,0.08);
+    box-shadow: 0 0 20px rgba(0,212,255,0.15), inset 0 0 20px rgba(0,212,255,0.03);
+    transform: translateX(3px);
+  }
+  .agent-card.premium { border-left-color: var(--orange); }
+  .agent-card.premium:hover { border-left-color: var(--orange); box-shadow: 0 0 20px rgba(255,107,43,0.15), inset 0 0 20px rgba(255,107,43,0.03); }
+  .agent-card.dormant { border-left-color: var(--text-dim); opacity: 0.5; }
+  .agent-card.premium::after {
+    content: '';
+    position: absolute;
+    top: -1px; left: -1px; right: -1px; bottom: -1px;
+    background: linear-gradient(45deg, var(--orange), transparent, var(--cyan), transparent, var(--orange));
+    background-size: 300% 300%;
+    animation: borderGlow 4s ease infinite;
+    border-radius: 4px;
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .agent-card.premium:hover::after { opacity: 0.3; }
+  @keyframes borderGlow { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+  .agent-name { font-family: 'Press Start 2P', cursive; font-size: 7px; color: var(--text); margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+  .agent-meta { font-size: 10px; color: var(--text-dim); display: flex; gap: 8px; flex-wrap: wrap; }
+  .agent-model { color: var(--cyan-dim); font-size: 9px; }
+  .agent-skills-count { color: var(--orange); font-size: 9px; }
+  .agent-hb { color: var(--text-dim); font-size: 9px; }
+  .agent-last-msg { font-size: 9px; color: var(--text-dim); margin-top: 4px; max-height: 28px; overflow: hidden; line-height: 1.4; opacity: 0.7; }
+  .tag { display: inline-block; padding: 1px 5px; border-radius: 2px; font-size: 8px; font-family: 'Press Start 2P', cursive; }
+  .tag-TG { background: rgba(0,136,204,0.2); color: #0088cc; border: 1px solid #0088cc44; }
+  .tag-WA { background: rgba(37,211,102,0.2); color: #25d366; border: 1px solid #25d36644; }
+  .tag-DISC { background: rgba(88,101,242,0.2); color: #5865f2; border: 1px solid #5865f244; }
+  .tag-SLACK { background: rgba(74,21,75,0.2); color: #e01e5a; border: 1px solid #e01e5a44; }
+  .tag-API { background: rgba(0,212,255,0.2); color: var(--cyan); border: 1px solid rgba(0,212,255,0.3); }
+
+  .hero-stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; height: 100%; }
+  .hero-stat { text-align: center; padding: 16px 8px; border-right: 1px solid var(--border); display: flex; flex-direction: column; justify-content: center; }
+  .hero-stat:last-child { border-right: none; }
+  .hero-stat-value { font-family: 'Press Start 2P', cursive; font-size: 26px; color: var(--cyan); text-shadow: 0 0 30px rgba(0,212,255,0.6), 0 0 60px rgba(0,212,255,0.2); margin-bottom: 6px; animation: statPulse 3s ease-in-out infinite; }
+  .hero-stat-value.orange { color: var(--orange); text-shadow: 0 0 30px rgba(255,107,43,0.6); }
+  .hero-stat-value.green { color: var(--green); text-shadow: 0 0 30px rgba(0,255,136,0.6); }
+  .hero-stat-value.yellow { color: var(--yellow); text-shadow: 0 0 30px rgba(255,215,0,0.6); }
+  @keyframes statPulse { 0%,100%{opacity:1;} 50%{opacity:0.85;} }
+  .hero-stat-label { font-family: 'Press Start 2P', cursive; font-size: 6px; color: var(--text-dim); letter-spacing: 1px; text-transform: uppercase; }
+
+  .center-top { grid-column: 2; grid-row: 1; }
+  .center-bottom { grid-column: 2; grid-row: 2; }
+  .cron-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 8px; }
+  .cron-card { background: rgba(13,21,37,0.6); backdrop-filter: blur(4px); border: 1px solid rgba(30,58,95,0.4); padding: 8px 10px; border-radius: 4px; position: relative; overflow: hidden; transition: all 0.3s; }
+  .cron-card:hover { transform: scale(1.02); }
+  .cron-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px; }
+  .cron-card.ok::before { background: var(--green); box-shadow: 0 0 10px var(--green); }
+  .cron-card.error::before { background: var(--red); box-shadow: 0 0 10px var(--red); }
+  .cron-card.disabled::before { background: var(--text-dim); }
+  .cron-card.disabled { opacity: 0.4; }
+  .cron-name { font-size: 11px; color: var(--text); margin-bottom: 3px; font-weight: bold; }
+  .cron-agent { font-family: 'Press Start 2P', cursive; font-size: 6px; color: var(--cyan-dim); margin-bottom: 4px; }
+  .cron-schedule { font-size: 10px; color: var(--text-dim); }
+  .cron-status { font-size: 9px; margin-top: 3px; }
+  .cron-status.ok { color: var(--green); }
+  .cron-status.error { color: var(--red); }
+
+  .right-panel { grid-column: 3; grid-row: 1 / 3; display: flex; flex-direction: column; }
+  .right-panel .panel { flex: 1; min-height: 0; }
+
+  .vital-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid rgba(30,58,95,0.5); }
+  .vital-label { font-size: 11px; color: var(--text-dim); }
+  .vital-value { font-family: 'Press Start 2P', cursive; font-size: 8px; }
+  .vital-bar-container { width: 100%; height: 6px; background: var(--bg-dark); border-radius: 1px; margin-top: 4px; overflow: hidden; }
+  .vital-bar { height: 100%; border-radius: 1px; transition: width 1s ease; }
+  .vital-bar.green { background: linear-gradient(90deg, var(--green), #00cc66); box-shadow: 0 0 6px var(--green); }
+  .vital-bar.yellow { background: linear-gradient(90deg, var(--yellow), #cc9900); box-shadow: 0 0 6px var(--yellow); }
+  .vital-bar.red { background: linear-gradient(90deg, var(--red), #cc0033); box-shadow: 0 0 6px var(--red); }
+
+  .channel-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(30,58,95,0.5); }
+  .channel-name { font-size: 12px; display: flex; align-items: center; gap: 8px; }
+  .channel-icon { font-size: 16px; width: 24px; text-align: center; }
+  .channel-status { font-family: 'Press Start 2P', cursive; font-size: 7px; padding: 3px 8px; border-radius: 2px; }
+  .channel-status.online { background: rgba(0,255,136,0.15); color: var(--green); border: 1px solid rgba(0,255,136,0.3); }
+  .channel-status.offline { background: rgba(255,51,85,0.15); color: var(--red); border: 1px solid rgba(255,51,85,0.3); }
+
+  .provider-row { display: flex; align-items: center; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid rgba(30,58,95,0.5); }
+  .provider-name { font-size: 11px; color: var(--text); }
+  .provider-status { font-family: 'Press Start 2P', cursive; font-size: 6px; padding: 2px 6px; border-radius: 2px; }
+  .provider-status.active { background: rgba(0,255,136,0.15); color: var(--green); }
+  .provider-status.exhausted { background: rgba(255,215,0,0.15); color: var(--yellow); }
+  .provider-status.local { background: rgba(0,212,255,0.15); color: var(--cyan); }
+
+  .ticker-bar { background: rgba(255,107,43,0.1); border-top: 1px solid var(--orange); border-bottom: 1px solid var(--orange); padding: 4px 0; overflow: hidden; white-space: nowrap; }
+  .ticker-content { display: inline-block; animation: ticker 40s linear infinite; font-family: 'Press Start 2P', cursive; font-size: 7px; color: var(--orange); letter-spacing: 1px; }
+  @keyframes ticker { 0% { transform: translateX(100vw); } 100% { transform: translateX(-100%); } }
+
+  .clock { font-family: 'Press Start 2P', cursive; font-size: 10px; color: var(--cyan); text-shadow: 0 0 10px rgba(0,212,255,0.5); }
+
+  .floor-glow {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, transparent, var(--orange), var(--cyan), var(--green), var(--cyan), var(--orange), transparent);
+    background-size: 200% 100%;
+    box-shadow: 0 0 30px rgba(255,107,43,0.4), 0 0 60px rgba(0,212,255,0.3);
+    animation: glowShift 8s ease infinite, glowSlide 6s linear infinite;
+    z-index: 100;
+  }
+  @keyframes glowShift { 0%,100%{opacity:0.7} 50%{opacity:1} }
+  @keyframes glowSlide { 0%{background-position:0% 0%} 100%{background-position:200% 0%} }
+
+  .main-grid { position: relative; z-index: 5; }
+  .view-page { position: relative; z-index: 5; }
+  .ticker-bar { position: relative; z-index: 5; }
+
+  @media (max-width: 1200px) { .main-grid { grid-template-columns: 240px 1fr 260px; } }
+  @media (max-width: 900px) {
+    .main-grid { grid-template-columns: 1fr; grid-template-rows: auto auto auto auto; height: auto; }
+    .left-panel { grid-row: auto; }
+    .center-top { grid-column: 1; }
+    .center-bottom { grid-column: 1; }
+    .right-panel { grid-column: 1; grid-row: auto; }
+    .hero-stats { grid-template-columns: repeat(3, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<div id="tsparticles"></div>
+
+<!-- TOP BAR -->
+<div class="top-bar">
+  <div class="top-bar-left">
+    <div>
+      <div class="logo-pixel" id="brand-name">SOLAR SYSTEM</div>
+      <div class="logo-sub" id="brand-subtitle">MISSION CONTROL</div>
+    </div>
+    <span style="color:var(--text-dim); font-size:10px;" id="brand-version">v1.0.0</span>
+  </div>
+  <div class="top-bar-center" id="brand-center">AI AGENT HQ</div>
+  <div class="top-bar-right">
+    <span id="gw-indicator"><span class="status-dot green"></span>SYSTEM LIVE</span>
+    <span class="clock" id="clock">--:--:--</span>
+  </div>
+</div>
+
+<!-- NAV TABS -->
+<div class="nav-tabs">
+  <div class="nav-tab active" onclick="switchView('dashboard',this)">DASHBOARD</div>
+  <div class="nav-tab" onclick="switchView('solar',this)" style="color:var(--green);font-weight:bold;">SOLAR SYSTEM</div>
+  <div class="nav-tab" onclick="switchView('agents',this)">AGENT GRID</div>
+</div>
+
+<!-- ========== VIEW: DASHBOARD ========== -->
+<div class="view-page active" id="view-dashboard">
+
+<div class="ticker-bar">
+  <div class="ticker-content" id="ticker-text"></div>
+</div>
+
+<div class="main-grid">
+
+  <!-- LEFT PANEL: AGENT ROSTER -->
+  <div class="left-panel panel">
+    <div class="panel-header">&#9733; AGENT ROSTER</div>
+    <div class="panel-body" id="agent-roster"></div>
+  </div>
+
+  <!-- CENTER TOP: HERO STATS -->
+  <div class="center-top panel" style="border-bottom:none;">
+    <div class="hero-stats" id="hero-stats"></div>
+  </div>
+
+  <!-- CENTER BOTTOM: CRON MISSIONS -->
+  <div class="center-bottom panel">
+    <div class="panel-header orange-header">&#9881; SCHEDULED MISSIONS</div>
+    <div class="panel-body" id="cron-body"></div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="right-panel">
+    <div class="panel" style="flex:0 0 auto;">
+      <div class="panel-header green-header">&#9889; SYSTEM VITALS</div>
+      <div class="panel-body" style="padding:10px 14px;" id="vitals-body">
+        <div style="display:flex;gap:10px;margin-bottom:8px;">
+          <div style="flex:1;text-align:center;"><canvas id="ram-gauge" width="100" height="60"></canvas><div style="font-size:8px;color:var(--text-dim);">RAM</div></div>
+          <div style="flex:1;text-align:center;"><canvas id="cron-donut" width="100" height="60"></canvas><div style="font-size:8px;color:var(--text-dim);">CRONS</div></div>
+        </div>
+        <div class="vital-row"><div><div class="vital-label">RAM</div><div class="vital-bar-container"><div class="vital-bar green" id="ram-bar" style="width:40%;"></div></div></div><div class="vital-value" id="ram-val" style="color:var(--green);">-- / -- GB</div></div>
+        <div class="vital-row"><div class="vital-label">Platform</div><div class="vital-value" id="sys-platform" style="color:var(--text);">--</div></div>
+        <div class="vital-row"><div class="vital-label">Agents Online</div><div class="vital-value" id="sys-agents-online" style="color:var(--green);">--</div></div>
+        <div class="vital-row"><div class="vital-label">Uptime</div><div class="vital-value" id="sys-uptime" style="color:var(--cyan);">--</div></div>
+      </div>
+    </div>
+
+    <div class="panel" style="flex:0 0 auto;" id="revenue-panel">
+      <div class="panel-header" style="background:linear-gradient(90deg,rgba(255,215,0,0.15) 0%,transparent 100%);color:var(--yellow);">&#9733; KPI STREAMS</div>
+      <div class="panel-body" style="padding:6px 14px;" id="revenue-body"></div>
+    </div>
+
+    <div class="panel" style="flex:0 0 auto;">
+      <div class="panel-header">&#128225; CHANNELS</div>
+      <div class="panel-body" style="padding:6px 14px;" id="channels-body"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header orange-header">&#9729; MODEL PROVIDERS</div>
+      <div class="panel-body" style="padding:6px 14px;" id="providers-body"></div>
+    </div>
+  </div>
+
+</div><!-- /main-grid -->
+<div class="floor-glow"></div>
+</div><!-- /view-dashboard -->
+
+<!-- ========== VIEW: SOLAR SYSTEM ========== -->
+<div class="view-page" id="view-solar">
+  <iframe class="embed-frame" id="solar-iframe" src="about:blank"></iframe>
+</div>
+
+<!-- ========== VIEW: AGENT GRID ========== -->
+<div class="view-page" id="view-agents" style="padding:20px;overflow-y:auto;height:calc(100vh - 100px);">
+  <div style="text-align:center;padding-top:20px;">
+    <div style="font-family:'Press Start 2P',cursive;font-size:14px;color:var(--cyan);margin-bottom:20px;">AGENT OVERVIEW</div>
+    <div id="agent-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;max-width:1100px;margin:0 auto;"></div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// SOLAR SYSTEM AGENTS — MISSION CONTROL ENGINE
+// Open Source — github.com/roomsterdam/solar-system-agents
+// ============================================================
+
+const C = typeof CONFIG !== 'undefined' ? CONFIG : null;
+
+// ── DEMO DATA (used when no config.js is loaded) ────────────
+const DEMO = {
+  brand: { name: 'SOLAR SYSTEM', subtitle: 'MISSION CONTROL', version: 'v1.0.0', centerTitle: 'AI AGENT HQ — DEMO MODE' },
+  gateway: { url: null, refreshInterval: 15000 },
+  agents: [
+    { id:'orchestrator', name:'ORCHESTRATOR', model:'gpt-4o', role:'Central routing & task delegation', tier:'command', premium:true, skills:14, channels:['API','SLACK'], status:'active', heartbeat:'30m' },
+    { id:'researcher', name:'RESEARCHER', model:'claude-sonnet-4-6', role:'Deep research & analysis', tier:'command', premium:true, skills:9, channels:['API'], status:'active', heartbeat:'90m' },
+    { id:'coder', name:'CODER', model:'claude-sonnet-4-6', role:'Code gen, review, debugging', tier:'command', premium:true, skills:18, channels:['API','SLACK'], status:'active', heartbeat:'15m' },
+    { id:'designer', name:'DESIGNER', model:'dall-e-3', role:'UI/UX mockups & assets', tier:'command', premium:true, skills:5, channels:['API'], status:'active', heartbeat:'120m' },
+    { id:'writer', name:'WRITER', model:'gpt-4o-mini', role:'Blog posts & documentation', tier:'operations', premium:false, skills:7, channels:['API','SLACK'], status:'active', heartbeat:'60m' },
+    { id:'sales', name:'SALES AGENT', model:'gpt-4o-mini', role:'Lead gen & CRM updates', tier:'operations', premium:false, skills:11, channels:['TG','WA','API'], status:'active', heartbeat:'45m' },
+    { id:'support', name:'SUPPORT BOT', model:'gpt-4o-mini', role:'Customer tickets & FAQ', tier:'operations', premium:false, skills:6, channels:['TG','WA','SLACK'], status:'active', heartbeat:'10m' },
+    { id:'data', name:'DATA AGENT', model:'gpt-4o-mini', role:'ETL pipelines & reports', tier:'operations', premium:false, skills:9, channels:['API'], status:'active', heartbeat:'60m' },
+    { id:'devops', name:'DEVOPS', model:'gpt-4o-mini', role:'CI/CD & infrastructure', tier:'support', premium:false, skills:12, channels:['API','SLACK'], status:'active', heartbeat:'5m' },
+    { id:'security', name:'SECURITY', model:'claude-haiku-4-5', role:'Threat detection & audits', tier:'support', premium:false, skills:8, channels:['API'], status:'idle', heartbeat:'360m' },
+    { id:'analytics', name:'ANALYTICS', model:'gpt-4o-mini', role:'Growth metrics & dashboards', tier:'support', premium:false, skills:5, channels:['API','SLACK'], status:'idle', heartbeat:'120m' },
+    { id:'backup', name:'BACKUP BOT', model:'gpt-4o-mini', role:'Nightly snapshots & recovery', tier:'support', premium:false, skills:3, channels:['API'], status:'dormant', heartbeat:'1440m' },
+  ],
+  crons: [
+    { agent:'ORCHESTRATOR', name:'Morning Standup Brief', schedule:'09:00 daily', status:'ok' },
+    { agent:'RESEARCHER', name:'Industry Trends Report', schedule:'06:00 daily', status:'ok' },
+    { agent:'CODER', name:'Dependency Security Audit', schedule:'03:00 daily', status:'ok' },
+    { agent:'SALES', name:'Lead Pipeline Scan', schedule:'09:00, 14:00, 18:00', status:'ok' },
+    { agent:'DEVOPS', name:'Infrastructure Health Sweep', schedule:'Every 5 min', status:'ok' },
+    { agent:'SECURITY', name:'Full Security Scan', schedule:'03:00, 15:00', status:'ok' },
+    { agent:'WRITER', name:'Content Calendar Posts', schedule:'10:00, 16:00', status:'ok' },
+    { agent:'SUPPORT', name:'Ticket Digest', schedule:'08:00, 17:00', status:'ok' },
+    { agent:'DATA', name:'ETL Pipeline Run', schedule:'02:00, 14:00', status:'ok' },
+    { agent:'BACKUP', name:'Nightly Full Backup', schedule:'04:00 daily', status:'ok' },
+    { agent:'ANALYTICS', name:'Weekly Growth Report', schedule:'Mon 09:00', status:'ok' },
+  ],
+  channels: [
+    { name:'Slack', icon:'\u2709', status:'online', detail:'6 CHANNELS' },
+    { name:'Telegram', icon:'\u2708', status:'online', detail:'4 BOTS' },
+    { name:'WhatsApp', icon:'\u260E', status:'online', detail:'ACTIVE' },
+    { name:'REST API', icon:'\uD83D\uDDA5', status:'online', detail:'v2.1' },
+  ],
+  providers: [
+    { name:'OpenAI', detail:'gpt-4o, gpt-4o-mini, dall-e-3', status:'active', label:'PRIMARY' },
+    { name:'Anthropic', detail:'claude-sonnet-4-6, haiku', status:'active', label:'ACTIVE' },
+    { name:'Groq', detail:'llama-3.3-70b (fast inference)', status:'active', label:'FAST' },
+    { name:'Ollama', detail:'Local models (privacy mode)', status:'local', label:'LOCAL' },
+  ],
+  revenue: [
+    { name:'SaaS Subscriptions', icon:'\uD83D\uDCBB', status:'online', detail:'$4.2K MRR' },
+    { name:'API Usage Fees', icon:'\u26A1', status:'online', detail:'$890/mo' },
+    { name:'Enterprise Deals', icon:'\uD83D\uDCBC', status:'online', detail:'3 CLIENTS' },
+    { name:'Marketplace Add-ons', icon:'\uD83D\uDED2', status:'offline', detail:'COMING SOON' },
+  ],
+  system: { platform:'Cloud VPS (8 vCPU)', ram:{ total:32, unit:'GB' }, gatewayPort:8080 },
+  solarSystemUrl: 'index.html',
+};
+
+const cfg = C || DEMO;
+const agents = cfg.agents || [];
+const crons = cfg.crons || [];
+const bootTime = Date.now();
+
+// ── BRANDING ────────────────────────────────────────────────
+document.getElementById('brand-name').textContent = cfg.brand?.name || 'MISSION CONTROL';
+document.getElementById('brand-subtitle').textContent = cfg.brand?.subtitle || '';
+document.getElementById('brand-version').textContent = cfg.brand?.version || '';
+document.getElementById('brand-center').textContent = cfg.brand?.centerTitle || '';
+document.title = (cfg.brand?.name || 'Mission Control') + ' — AI Agent Dashboard';
+
+// ── CLOCK ───────────────────────────────────────────────────
+function updateClock() {
+  const d = new Date();
+  document.getElementById('clock').textContent =
+    [d.getHours(),d.getMinutes(),d.getSeconds()].map(n=>String(n).padStart(2,'0')).join(':');
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ── BUILD AGENT ROSTER ──────────────────────────────────────
+function buildRoster() {
+  const roster = document.getElementById('agent-roster');
+  const tiers = { command:'COMMAND TEAM', operations:'OPERATIONS', support:'SUPPORT & MONITORING' };
+  const tierColors = { command:'var(--orange)', operations:'var(--cyan)', support:'var(--text-dim)' };
+  let html = '';
+  for (const [tier, label] of Object.entries(tiers)) {
+    const tierAgents = agents.filter(a => a.tier === tier);
+    if (!tierAgents.length) continue;
+    html += `<div style="padding:4px 6px;font-family:'Press Start 2P',cursive;font-size:6px;color:${tierColors[tier]};margin:${tier==='command'?'0':'10px'} 0 6px;letter-spacing:1px;">${label}</div>`;
+    for (const a of tierAgents) {
+      const dotClass = a.status === 'active' ? 'green' : a.status === 'error' ? 'red' : a.status === 'idle' ? 'yellow' : 'dim';
+      const cardClass = a.premium ? 'premium' : a.status === 'dormant' ? 'dormant' : '';
+      const tags = (a.channels||[]).map(c => `<span class="tag tag-${c}">${c}</span>`).join('');
+      html += `<div class="agent-card ${cardClass}" data-agent="${a.id}">
+        <div class="agent-name"><span class="status-dot ${dotClass}" id="dot-${a.id}"></span>${esc(a.name)}</div>
+        <div class="agent-meta">
+          <span class="agent-model">${esc(a.model)}</span>
+          ${a.skills ? `<span class="agent-skills-count">${a.skills} skills</span>` : ''}
+        </div>
+        <div class="agent-meta" style="margin-top:3px;">
+          ${tags}
+          ${a.heartbeat ? `<span class="agent-hb">HB: ${esc(a.heartbeat)}</span>` : ''}
+          <span class="agent-hb" id="ago-${a.id}" style="margin-left:auto;"></span>
+        </div>
+        <div class="agent-last-msg" id="msg-${a.id}"></div>
+      </div>`;
+    }
+  }
+  roster.innerHTML = html;
+}
+
+// ── BUILD HERO STATS ────────────────────────────────────────
+function buildHeroStats() {
+  const el = document.getElementById('hero-stats');
+  const active = agents.filter(a => a.status === 'active').length;
+  const cronCount = crons.length;
+  const channelCount = (cfg.channels||[]).filter(c => c.status === 'online').length;
+  const revenueCount = (cfg.revenue||[]).filter(r => r.status === 'online').length;
+  el.innerHTML = `
+    <div class="hero-stat"><div class="hero-stat-value">${agents.length}</div><div class="hero-stat-label">AGENTS</div></div>
+    <div class="hero-stat"><div class="hero-stat-value orange">${cronCount}</div><div class="hero-stat-label">CRONS</div></div>
+    <div class="hero-stat"><div class="hero-stat-value green">${active}</div><div class="hero-stat-label">ACTIVE</div></div>
+    <div class="hero-stat"><div class="hero-stat-value yellow">${channelCount}</div><div class="hero-stat-label">CHANNELS</div></div>
+    <div class="hero-stat"><div class="hero-stat-value" style="color:var(--green);">LIVE</div><div class="hero-stat-label">STATUS</div></div>
+  `;
+}
+
+// ── BUILD CRON CARDS ────────────────────────────────────────
+function buildCrons() {
+  const el = document.getElementById('cron-body');
+  let html = '<div class="cron-grid">';
+  for (const c of crons) {
+    const cls = c.status === 'ok' ? 'ok' : c.status === 'error' ? 'error' : 'disabled';
+    const fakeTime = Math.floor(Math.random()*180+10) + 's';
+    html += `<div class="cron-card ${cls}">
+      <div class="cron-agent">${esc(c.agent)}</div>
+      <div class="cron-name">${esc(c.name)}</div>
+      <div class="cron-schedule">${esc(c.schedule)}</div>
+      <div class="cron-status ${cls}">LAST: ${c.status==='ok'?'OK':'ERR'} &bull; ${fakeTime}</div>
+    </div>`;
+  }
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+// ── BUILD RIGHT PANELS ──────────────────────────────────────
+function buildChannels() {
+  const el = document.getElementById('channels-body');
+  let html = '';
+  for (const ch of (cfg.channels||[])) {
+    html += `<div class="channel-row"><div class="channel-name"><span class="channel-icon">${ch.icon||''}</span>${esc(ch.name)}</div><div class="channel-status ${ch.status}">${esc(ch.detail||ch.status.toUpperCase())}</div></div>`;
+  }
+  el.innerHTML = html;
+}
+
+function buildProviders() {
+  const el = document.getElementById('providers-body');
+  let html = '';
+  for (const p of (cfg.providers||[])) {
+    html += `<div class="provider-row"><div><div class="provider-name">${esc(p.name)}</div><div style="font-size:9px;color:var(--text-dim);">${esc(p.detail)}</div></div><div class="provider-status ${p.status}">${esc(p.label||p.status.toUpperCase())}</div></div>`;
+  }
+  el.innerHTML = html;
+}
+
+function buildRevenue() {
+  const el = document.getElementById('revenue-body');
+  const panel = document.getElementById('revenue-panel');
+  const items = cfg.revenue || [];
+  if (!items.length) { panel.style.display = 'none'; return; }
+  let html = '';
+  for (const r of items) {
+    html += `<div class="channel-row"><div class="channel-name"><span class="channel-icon">${r.icon||''}</span>${esc(r.name)}</div><div class="channel-status ${r.status}">${esc(r.detail||'')}</div></div>`;
+  }
+  el.innerHTML = html;
+}
+
+// ── BUILD TICKER ────────────────────────────────────────────
+function buildTicker() {
+  const parts = [
+    cfg.brand?.name || 'MISSION CONTROL',
+    agents.length + ' AGENTS DEPLOYED',
+    agents.filter(a=>a.status==='active').length + ' ACTIVE',
+    crons.length + ' SCHEDULED MISSIONS',
+    (cfg.channels||[]).filter(c=>c.status==='online').length + ' CHANNELS ONLINE',
+  ];
+  for (const p of (cfg.providers||[]).filter(p=>p.status==='active')) {
+    parts.push(p.name.toUpperCase() + ' ' + (p.label||'ACTIVE'));
+  }
+  parts.push('SYSTEM NOMINAL');
+  if (!C) parts.push('DEMO MODE — EDIT config.js TO CUSTOMIZE');
+  document.getElementById('ticker-text').innerHTML = '&nbsp;&nbsp;&nbsp;' + parts.join(' &bull; ') + '&nbsp;&nbsp;&nbsp;';
+}
+
+// ── BUILD VITALS ────────────────────────────────────────────
+function buildVitals() {
+  const sys = cfg.system || {};
+  document.getElementById('sys-platform').textContent = sys.platform || 'N/A';
+  document.getElementById('sys-agents-online').textContent = agents.filter(a=>a.status==='active').length + ' / ' + agents.length;
+  // Simulate RAM (will be replaced by live data if gateway is set)
+  const totalRam = sys.ram?.total || 16;
+  const usedPct = 35 + Math.random()*20;
+  const freeGb = ((totalRam * (100-usedPct)/100)).toFixed(1);
+  document.getElementById('ram-val').textContent = freeGb + sys.ram?.unit + ' free / ' + totalRam + ' ' + (sys.ram?.unit||'GB');
+  document.getElementById('ram-bar').style.width = usedPct + '%';
+}
+
+function updateUptime() {
+  const elapsed = Date.now() - bootTime;
+  const h = Math.floor(elapsed/3600000);
+  const m = Math.floor((elapsed%3600000)/60000);
+  const s = Math.floor((elapsed%60000)/1000);
+  document.getElementById('sys-uptime').textContent = h+'h '+m+'m '+s+'s';
+}
+setInterval(updateUptime, 1000);
+
+// ── AGENT GRID (separate view) ──────────────────────────────
+function buildAgentGrid() {
+  const el = document.getElementById('agent-grid');
+  let html = '';
+  for (const a of agents) {
+    const dotClass = a.status==='active'?'green':a.status==='error'?'red':a.status==='idle'?'yellow':'dim';
+    const borderColor = a.premium ? 'var(--orange)' : a.status==='active' ? 'var(--cyan)' : 'var(--text-dim)';
+    html += `<div style="padding:16px;border:1px solid var(--border);background:var(--bg-panel);border-radius:6px;border-top:3px solid ${borderColor};transition:all 0.2s;" onmouseover="this.style.boxShadow='0 0 20px ${borderColor}40'" onmouseout="this.style.boxShadow='none'">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;"><span class="status-dot ${dotClass}"></span><span style="font-family:'Press Start 2P',cursive;font-size:9px;color:${borderColor};">${esc(a.name)}</span></div>
+      <div style="font-size:11px;color:var(--text-dim);margin-bottom:4px;">${esc(a.role)}</div>
+      <div style="font-size:10px;color:var(--cyan-dim);">${esc(a.model)}</div>
+      ${a.skills ? `<div style="font-size:9px;color:var(--orange);margin-top:4px;">${a.skills} skills</div>` : ''}
+      <div style="margin-top:6px;">${(a.channels||[]).map(c=>`<span class="tag tag-${c}">${c}</span>`).join(' ')}</div>
+    </div>`;
+  }
+  el.innerHTML = html;
+}
+
+// ── VIEW SWITCHING ──────────────────────────────────────────
+const loadedViews = {};
+function switchView(id, el) {
+  document.querySelectorAll('.view-page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('view-'+id).classList.add('active');
+  el.classList.add('active');
+  if (id==='solar' && !loadedViews['solar']) {
+    const url = cfg.solarSystemUrl || 'index.html';
+    document.getElementById('solar-iframe').src = url;
+    loadedViews['solar'] = true;
+  }
+  if (id==='agents' && !loadedViews['agents']) {
+    buildAgentGrid();
+    loadedViews['agents'] = true;
+  }
+}
+
+// ── LIVE DATA (optional — only if gateway is configured) ────
+async function fetchLiveData() {
+  const gw = cfg.gateway;
+  if (!gw || !gw.url) return;
+  try {
+    const [statusRes, healthRes] = await Promise.all([
+      fetch(gw.url + (gw.statusEndpoint||'/api/status') + '?t=' + Date.now()).then(r=>r.json()).catch(()=>null),
+      fetch(gw.url + (gw.healthEndpoint||'/health')).then(r=>r.json()).catch(()=>({ok:false})),
+    ]);
+    const gwEl = document.getElementById('gw-indicator');
+    gwEl.innerHTML = healthRes.ok
+      ? '<span class="status-dot green"></span>SYSTEM LIVE'
+      : '<span class="status-dot red"></span>SYSTEM DOWN';
+    if (statusRes && statusRes.agents) {
+      for (const update of statusRes.agents) {
+        const dot = document.getElementById('dot-'+update.id);
+        if (dot) {
+          dot.className = 'status-dot ' + (update.status==='active'?'green':update.status==='error'?'red':'yellow');
+        }
+        const msg = document.getElementById('msg-'+update.id);
+        if (msg && update.lastMessage) msg.textContent = update.lastMessage.slice(0,80);
+      }
+    }
+  } catch(e) {}
+}
+if (cfg.gateway?.url) {
+  fetchLiveData();
+  setInterval(fetchLiveData, cfg.gateway?.refreshInterval || 15000);
+}
+
+// ── DEMO SIMULATION (makes it look alive) ───────────────────
+function simulateActivity() {
+  const activeAgents = agents.filter(a=>a.status==='active');
+  if (!activeAgents.length) return;
+  const a = activeAgents[Math.floor(Math.random()*activeAgents.length)];
+  const agoEl = document.getElementById('ago-'+a.id);
+  if (agoEl) agoEl.textContent = Math.floor(Math.random()*30)+'s ago';
+  const actions = [
+    'Processing incoming request...',
+    'Task completed successfully',
+    'Analyzing data pipeline results',
+    'Generating response for user query',
+    'Scanning for new assignments',
+    'Updating knowledge base',
+    'Running scheduled maintenance',
+    'Syncing with upstream services',
+    'Evaluating model performance',
+    'Preparing daily summary report',
+  ];
+  const msgEl = document.getElementById('msg-'+a.id);
+  if (msgEl) msgEl.textContent = actions[Math.floor(Math.random()*actions.length)];
+}
+setInterval(simulateActivity, 3000);
+simulateActivity();
+
+// ── STATUS DOT FLICKER ──────────────────────────────────────
+setInterval(()=>{
+  const dots = document.querySelectorAll('.status-dot.green');
+  if(dots.length){
+    const i = Math.floor(Math.random()*dots.length);
+    dots[i].style.opacity='0.2';
+    setTimeout(()=>{dots[i].style.opacity='';},200);
+  }
+}, 3000);
+
+// ── CHARTS ──────────────────────────────────────────────────
+let ramChart = null, cronChart = null;
+
+function initCharts() {
+  const ramCtx = document.getElementById('ram-gauge')?.getContext('2d');
+  if (ramCtx) {
+    const usedPct = 45;
+    ramChart = new Chart(ramCtx, {
+      type: 'doughnut',
+      data: { datasets: [{ data: [usedPct, 100-usedPct], backgroundColor: ['rgba(0,255,136,0.8)', 'rgba(30,58,95,0.3)'], borderWidth: 0, circumference: 180, rotation: 270 }] },
+      options: { responsive: false, cutout: '70%', plugins: { legend: { display: false }, tooltip: { enabled: false } }, animation: { animateRotate: true, duration: 1000 } }
+    });
+  }
+  const cronCtx = document.getElementById('cron-donut')?.getContext('2d');
+  if (cronCtx) {
+    const okC = crons.filter(c=>c.status==='ok').length;
+    const errC = crons.filter(c=>c.status==='error').length;
+    const other = crons.length - okC - errC;
+    cronChart = new Chart(cronCtx, {
+      type: 'doughnut',
+      data: { labels: ['OK','Error','Other'], datasets: [{ data: [okC, errC, other], backgroundColor: ['rgba(0,255,136,0.8)', 'rgba(255,51,85,0.8)', 'rgba(90,122,154,0.5)'], borderWidth: 0 }] },
+      options: { responsive: false, cutout: '55%', plugins: { legend: { display: false }, tooltip: { enabled: true } }, animation: { animateRotate: true, duration: 1000 } }
+    });
+  }
+}
+
+// ── PARTICLES ───────────────────────────────────────────────
+tsParticles.load("tsparticles", {
+  fullScreen: false,
+  background: { color: "transparent" },
+  particles: {
+    number: { value: 40, density: { enable: true, value_area: 900 } },
+    color: { value: ["#00d4ff", "#ff6b2b", "#00ff88", "#ffd700"] },
+    shape: { type: "circle" },
+    opacity: { value: 0.4, random: true, anim: { enable: true, speed: 0.5, opacity_min: 0.1, sync: false } },
+    size: { value: 2.5, random: true, anim: { enable: true, speed: 1, size_min: 0.5, sync: false } },
+    links: { enable: true, distance: 160, color: "#0088aa", opacity: 0.2, width: 1, triangles: { enable: true, color: "#003355", opacity: 0.02 } },
+    move: { enable: true, speed: 0.6, direction: "none", random: true, straight: false, outModes: { default: "bounce" } }
+  },
+  interactivity: {
+    events: { onHover: { enable: true, mode: "grab" }, resize: true },
+    modes: { grab: { distance: 180, links: { opacity: 0.4 } } }
+  },
+  detectRetina: true
+});
+
+// ── HELPERS ─────────────────────────────────────────────────
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ── BOOT ────────────────────────────────────────────────────
+buildRoster();
+buildHeroStats();
+buildCrons();
+buildChannels();
+buildProviders();
+buildRevenue();
+buildTicker();
+buildVitals();
+updateUptime();
+initCharts();
+
+if (!C) {
+  console.log('%c SOLAR SYSTEM AGENTS — DEMO MODE ', 'background:#ff6b2b;color:#0a0e1a;font-weight:bold;font-size:14px;padding:4px 8px;');
+  console.log('%c Edit config.js to configure your own agents ', 'color:#00d4ff;font-size:12px;');
+  console.log('%c https://github.com/roomsterdam/solar-system-agents ', 'color:#00ff88;font-size:11px;');
+}
+</script>
+
+</body>
+</html>

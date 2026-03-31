@@ -1,10 +1,10 @@
 # Solar System Agents
 
-**Visualize your AI agents as a solar system.**
+**The AI agent dashboard your team actually wants to look at.**
 
-An interactive orbital dashboard where each AI agent is a planet orbiting your central core. Built for teams running multi-agent AI systems who need a beautiful, real-time command center.
+A cyberpunk command center for monitoring AI agent fleets in real-time. Two views: an orbital solar system visualization and a full mission control dashboard. Works with any agent framework.
 
-> Zero dependencies. One HTML file. Works with any agent framework.
+> Zero dependencies. Static HTML files. No build step. No npm install.
 
 <p align="center">
   <img src="https://img.shields.io/badge/agents-any_framework-blue?style=flat-square" />
@@ -14,36 +14,49 @@ An interactive orbital dashboard where each AI agent is a planet orbiting your c
   <img src="https://img.shields.io/github/license/roomsterdam/solar-system-agents?style=flat-square" />
 </p>
 
+<p align="center">
+  <a href="https://vercel.com/new/clone?repository-url=https://github.com/roomsterdam/solar-system-agents"><img src="https://vercel.com/button" alt="Deploy with Vercel" /></a>
+  &nbsp;
+  <a href="https://app.netlify.com/start/deploy?repository=https://github.com/roomsterdam/solar-system-agents"><img src="https://www.netlify.com/img/deploy/button.svg" alt="Deploy to Netlify" /></a>
+</p>
+
 ---
 
 <p align="center">
-  <img src="solar-agents-live.gif" alt="Solar System Agents - Live Network" width="720" />
+  <img src="mission-control-live.gif" alt="Mission Control — Cyberpunk AI Dashboard" width="720" />
 </p>
 
-<p align="center"><em>Your AI agents, orbiting in real-time.</em></p>
+<p align="center"><em>Mission Control — real-time agent monitoring with cyberpunk UI.</em></p>
 
 <p align="center">
-  <img src="mission-control-live.gif" alt="Mission Control Dashboard" width="720" />
+  <img src="solar-agents-live.gif" alt="Solar System — Orbital Agent Visualization" width="720" />
 </p>
 
-<p align="center"><em>Mission Control — cyberpunk command center with real-time agent monitoring.</em></p>
+<p align="center"><em>Solar System — your agents orbiting in real-time.</em></p>
 
 ---
 
-## What is this?
+## What You Get
 
-If you run AI agents (CrewAI, LangChain, AutoGPT, OpenAI Assistants, custom frameworks), you probably monitor them through logs, terminals, or generic dashboards.
+### Mission Control (`mission-control.html`)
+A full-featured dashboard with:
+- **Agent Roster** — live status, model, skills, and channel tags for every agent
+- **Scheduled Missions** — cron job monitoring with OK/ERR status
+- **System Vitals** — RAM gauge, uptime, platform info with Chart.js graphs
+- **KPI Streams** — revenue, API usage, or any metrics you track
+- **Channels & Providers** — Slack, Telegram, WhatsApp, API status at a glance
+- **Live ticker** — scrolling status bar across the bottom
+- **Particle network background** — tsParticles with interactive hover effects
+- **Scanline overlay** — CRT retro feel
+- **Demo mode** — works out of the box with realistic sample data
 
-**Solar System Agents** gives you a real-time visual command center where:
-
+### Solar System (`index.html`)
+An orbital visualization where:
 - The **Sun** is your core system / gateway
-- Each **planet** is an AI agent, orbiting based on its role and activity
-- **Moons** are sub-agents or tools attached to a parent agent
-- **Rings** (like Saturn) indicate agents with scheduled/cron tasks
-- Planet **size** reflects importance, **orbit speed** reflects activity level
-- **Glow and trails** show which agents are actively working
-
-Click any planet to see detailed stats. Zoom in/out. Pan around. Watch your agents orbit in real-time.
+- Each **planet** is an AI agent (size = importance, speed = activity)
+- **Moons** are sub-agents or tools
+- **Rings** (Saturn-style) indicate agents with cron jobs
+- Click any planet for detailed stats
 
 ## Deploy in 30 Seconds
 
@@ -55,133 +68,148 @@ Or run locally:
 ```bash
 git clone https://github.com/roomsterdam/solar-system-agents.git
 cd solar-system-agents
-open index.html
+open mission-control.html
 ```
 
-That's it. No build step. No npm install. No dependencies.
+That's it. The dashboard loads with demo data showing 12 agents, 11 cron jobs, 4 channels, and 4 model providers. Everything renders at 60fps.
 
 ## Configure Your Agents
 
-Edit the `AGENTS` array in `index.html`:
+Edit `config.js` to set up your own fleet:
 
 ```javascript
-const AGENTS = [
-  {
-    id: 'my-agent',
-    name: 'RESEARCHER',
-    planet: 'Earth',        // visual theme
-    color: '#4488ff',        // planet color
-    size: 9,                 // planet radius
-    orbit: 130,              // distance from sun
-    speed: 0.008,            // orbital speed
-    role: 'Deep research & analysis',
-    model: 'claude-opus-4-6',
-    status: 'active',        // 'active' or 'idle'
-    tasks24h: 34,
-    successRate: 98,
-    moons: [                 // optional sub-agents
-      { name: 'SCRAPER', size: 2, orbit: 16, speed: 0.04, color: '#88aacc' }
-    ]
+const CONFIG = {
+  brand: {
+    name: 'MY COMPANY',
+    subtitle: 'MISSION CONTROL',
+    centerTitle: 'AI OPERATIONS HQ',
   },
-  // ... add more agents
-];
+
+  agents: [
+    {
+      id: 'researcher',
+      name: 'RESEARCHER',
+      model: 'claude-sonnet-4-6',
+      role: 'Deep research & analysis',
+      tier: 'command',       // 'command' | 'operations' | 'support'
+      premium: true,         // highlighted card
+      skills: 8,
+      channels: ['API', 'SLACK'],
+      status: 'active',      // 'active' | 'idle' | 'error' | 'dormant'
+    },
+    // ... add more agents
+  ],
+
+  crons: [
+    { agent: 'RESEARCHER', name: 'Daily Report', schedule: '06:00', status: 'ok' },
+  ],
+
+  channels: [
+    { name: 'Slack', icon: '\u2709', status: 'online', detail: '4 CHANNELS' },
+  ],
+
+  providers: [
+    { name: 'Anthropic', detail: 'claude-sonnet-4-6', status: 'active', label: 'PRIMARY' },
+  ],
+};
 ```
 
-## Features
+See `config.js` for the full configuration reference with all available options.
 
-**Visual**
-- Canvas2D rendered solar system with orbital mechanics
-- Sun with corona glow, pulse animation, and radial gradients
-- Per-agent glow, trails, and selection highlights
-- Saturn-style rings for scheduled agents
-- Moon sub-agents orbiting parent planets
-- Animated starfield with twinkle effect
-- Smooth zoom (scroll), pan (drag), and reset controls
+## Connect Live Data
 
-**Dashboard**
-- Top HUD: agent count, active count, tasks/24h, uptime
-- Right panel: full agent roster with status dots
-- Click-to-select: detailed stats panel per agent
-- Real-time clock and FPS counter
-- Bottom status bar
+### Option 1: API Polling (built-in)
+Set your gateway URL in `config.js`:
 
-**Technical**
-- Single HTML file, zero dependencies
-- Canvas2D (no WebGL required)
-- 60fps on any modern browser
-- Retina/HiDPI display support
-- ~1000 lines of clean, readable code
-- Framework agnostic — works with anything
+```javascript
+gateway: {
+  url: 'http://localhost:8080',
+  healthEndpoint: '/health',
+  statusEndpoint: '/api/status',
+  refreshInterval: 15000,
+},
+```
 
-## Connecting Live Data
+The dashboard polls your API every 15 seconds and updates agent status dots and last messages.
 
-The default setup uses static data. To connect real agents:
-
-### Option 1: Direct JavaScript
-Update the `AGENTS` array from your API:
+### Option 2: Direct JavaScript
+Update agent data from your own API:
 
 ```javascript
 async function syncAgents() {
   const data = await fetch('/api/agents').then(r => r.json());
   data.forEach(agent => {
-    const planet = AGENTS.find(a => a.id === agent.id);
-    if (planet) {
-      planet.status = agent.status;
-      planet.tasks24h = agent.tasks_24h;
-      planet.successRate = agent.success_rate;
-    }
+    const dot = document.getElementById('dot-' + agent.id);
+    if (dot) dot.className = 'status-dot ' + (agent.active ? 'green' : 'yellow');
   });
 }
-setInterval(syncAgents, 15000);
+setInterval(syncAgents, 10000);
 ```
 
-### Option 2: WebSocket (real-time)
+### Option 3: WebSocket (real-time)
 ```javascript
 const ws = new WebSocket('ws://localhost:8080/agents');
 ws.onmessage = (e) => {
   const update = JSON.parse(e.data);
-  const planet = AGENTS.find(a => a.id === update.id);
-  if (planet) Object.assign(planet, update);
+  const dot = document.getElementById('dot-' + update.id);
+  if (dot) dot.className = 'status-dot ' + update.statusClass;
 };
 ```
 
-### Framework Adapters (coming soon)
-- CrewAI
-- LangChain / LangGraph
-- AutoGPT
-- OpenAI Assistants API
-- Semantic Kernel
-- Custom REST/WebSocket
+## Works With Any Framework
+
+- **CrewAI** / **LangChain** / **LangGraph**
+- **AutoGPT** / **BabyAGI**
+- **OpenAI Assistants API**
+- **Semantic Kernel**
+- **Custom REST/WebSocket agents**
+- **OpenClaw** (built with this)
 
 ## Use Cases
 
-- **AI Startups**: Monitor your production agent fleet
-- **Dev Teams**: Visualize CI/CD bots, code review agents, test runners
-- **Sales Teams**: Track outreach agents, lead gen bots, CRM automation
-- **Content Teams**: Monitor social media agents, content generators
-- **Security**: Watch threat detection agents, compliance monitors
-- **Personal**: Your own AI assistant ecosystem
+| Who | What |
+|-----|------|
+| **AI Startups** | Monitor production agent fleet |
+| **Dev Teams** | Visualize CI/CD bots, code review agents |
+| **Sales Teams** | Track outreach agents, lead gen bots |
+| **Content Teams** | Monitor social media agents, content generators |
+| **Security** | Watch threat detection agents, compliance monitors |
+| **Solo Builders** | Your personal AI assistant ecosystem |
+
+## Hosting
+
+| Method | Cost | Setup Time |
+|--------|------|------------|
+| Open `index.html` locally | Free | 10 seconds |
+| GitHub Pages | Free | 2 minutes |
+| Vercel (button above) | Free | 30 seconds |
+| Netlify (button above) | Free | 30 seconds |
+| Any static host | Free-$5/mo | 5 minutes |
 
 ## Roadmap
 
-- [ ] Live data adapters (CrewAI, LangChain, AutoGPT)
-- [ ] Agent-to-agent communication lines (visual connections)
+- [x] Solar System orbital visualization
+- [x] Mission Control dashboard
+- [x] Configurable agents, crons, channels, providers
+- [x] Demo mode (works without config)
+- [x] Live data polling via API
+- [x] Mobile responsive layout
+- [ ] Framework adapters (CrewAI, LangChain, AutoGPT)
+- [ ] Agent-to-agent communication lines
 - [ ] Asteroid belt for queued tasks
 - [ ] Comet events for alerts/incidents
-- [ ] Dark mode / light mode / custom themes
-- [ ] Mobile responsive layout
-- [ ] Docker + SaaS hosted version
+- [ ] Custom themes (dark/light/custom)
+- [ ] Docker image with built-in API server
+- [ ] SaaS hosted version with auth + team features
 - [ ] Agent marketplace & templates
-- [ ] Team collaboration features
 - [ ] Webhooks & notification integrations
 
 ## Contributing
 
-PRs welcome. The codebase is intentionally simple — one HTML file with inline CSS and JS. Keep it that way.
+PRs welcome. The codebase is intentionally simple — static HTML with inline CSS and JS. No build tools. Keep it that way.
 
 ```bash
-# Fork, clone, edit, open index.html in browser to test
-# No build process needed
+# Fork, clone, edit, open in browser to test
 ```
 
 ## License
@@ -192,4 +220,4 @@ MIT License. Use it however you want.
 
 **Built by [AUDAZ.AI](https://github.com/roomsterdam)** — We build AI agent infrastructure.
 
-If this helped you, star the repo. It helps others find it.
+If this helps you, star the repo. It helps others find it.
