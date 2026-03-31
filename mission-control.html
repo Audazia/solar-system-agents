@@ -86,13 +86,13 @@
   }
   .top-bar .brand {
     font-family: 'Press Start 2P', monospace;
-    font-size: 10px;
+    font-size: 16px;
     color: var(--cyan);
     text-shadow: 0 0 10px var(--cyan);
   }
   .top-bar .center-title {
     font-family: 'Press Start 2P', monospace;
-    font-size: 8px;
+    font-size: 13px;
     color: var(--orange);
     letter-spacing: 2px;
   }
@@ -100,7 +100,7 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    font-size: 12px;
+    font-size: 14px;
   }
   .gateway-dot {
     width: 8px; height: 8px;
@@ -113,7 +113,7 @@
     0%, 100% { opacity: 1; box-shadow: 0 0 6px var(--green); }
     50% { opacity: 0.6; box-shadow: 0 0 12px var(--green); }
   }
-  .clock { color: var(--yellow); font-family: 'Share Tech Mono', monospace; }
+  .clock { color: var(--yellow); font-family: 'Share Tech Mono', monospace; font-size: 16px; }
 
   /* ── TAB NAV ─────────────────────────────────── */
   .tab-nav {
@@ -127,7 +127,7 @@
   .tab-btn {
     padding: 10px 20px;
     font-family: 'Press Start 2P', monospace;
-    font-size: 7px;
+    font-size: 12px;
     color: var(--text-dim);
     background: transparent;
     border: none;
@@ -156,7 +156,7 @@
     display: inline-block;
     white-space: nowrap;
     animation: ticker 30s linear infinite;
-    font-size: 10px;
+    font-size: 14px;
     color: var(--orange);
     font-family: 'Press Start 2P', monospace;
     letter-spacing: 1px;
@@ -181,7 +181,7 @@
   }
   .panel-header {
     font-family: 'Press Start 2P', monospace;
-    font-size: 7px;
+    font-size: 12px;
     color: var(--cyan);
     margin-bottom: 10px;
     text-transform: uppercase;
@@ -193,7 +193,7 @@
   /* ── STATUS DOTS ─────────────────────────────── */
   .status-dot {
     display: inline-block;
-    width: 8px; height: 8px;
+    width: 10px; height: 10px;
     border-radius: 50%;
     margin-right: 6px;
     flex-shrink: 0;
@@ -211,8 +211,8 @@
   .ch-tag {
     display: inline-block;
     font-family: 'Press Start 2P', monospace;
-    font-size: 5px;
-    padding: 2px 5px;
+    font-size: 9px;
+    padding: 3px 6px;
     border-radius: 3px;
     margin-right: 3px;
   }
@@ -243,7 +243,7 @@
   .tier-group { margin-bottom: 12px; }
   .tier-label {
     font-family: 'Press Start 2P', monospace;
-    font-size: 6px;
+    font-size: 11px;
     color: var(--orange);
     letter-spacing: 2px;
     margin-bottom: 6px;
@@ -284,11 +284,11 @@
   }
   .agent-card-name {
     font-family: 'Press Start 2P', monospace;
-    font-size: 7px;
+    font-size: 12px;
     color: var(--cyan);
   }
   .agent-card-model {
-    font-size: 10px;
+    font-size: 14px;
     color: var(--text-dim);
     margin-bottom: 4px;
   }
@@ -300,15 +300,15 @@
     flex-wrap: wrap;
   }
   .agent-card-skills {
-    font-size: 9px;
+    font-size: 13px;
     color: var(--yellow);
   }
   .agent-card-heartbeat {
-    font-size: 9px;
+    font-size: 13px;
     color: var(--text-dim);
   }
   .agent-card-last {
-    font-size: 9px;
+    font-size: 13px;
     color: var(--text-dim);
     font-style: italic;
     white-space: nowrap;
@@ -333,7 +333,7 @@
   }
   .hero-stat-value {
     font-family: 'Press Start 2P', monospace;
-    font-size: 18px;
+    font-size: 28px;
     color: var(--cyan);
     text-shadow: 0 0 12px var(--cyan);
     margin-bottom: 6px;
@@ -343,7 +343,7 @@
   .hero-stat-value.yellow { color: var(--yellow); text-shadow: 0 0 12px var(--yellow); }
   .hero-stat-label {
     font-family: 'Press Start 2P', monospace;
-    font-size: 6px;
+    font-size: 10px;
     color: var(--text-dim);
     letter-spacing: 1px;
   }
@@ -365,22 +365,22 @@
   .cron-card.error { border-top-color: var(--red); }
   .cron-agent {
     font-family: 'Press Start 2P', monospace;
-    font-size: 6px;
+    font-size: 10px;
     color: var(--cyan);
     margin-bottom: 4px;
   }
   .cron-name {
     font-weight: bold;
-    font-size: 12px;
+    font-size: 16px;
     color: var(--text);
     margin-bottom: 4px;
   }
   .cron-last {
-    font-size: 10px;
+    font-size: 14px;
     color: var(--text-dim);
   }
   .cron-status-line {
-    font-size: 9px;
+    font-size: 13px;
     margin-top: 4px;
   }
   .cron-status-line.ok { color: var(--green); }
@@ -392,7 +392,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 11px;
+    font-size: 15px;
     padding: 4px 0;
     border-bottom: 1px solid rgba(30,58,95,0.3);
   }
@@ -412,17 +412,17 @@
     justify-content: space-between;
     padding: 6px 0;
     border-bottom: 1px solid rgba(30,58,95,0.3);
-    font-size: 11px;
+    font-size: 15px;
   }
   .channel-left, .provider-left {
     display: flex;
     align-items: center;
     gap: 8px;
   }
-  .channel-icon { font-size: 14px; }
+  .channel-icon { font-size: 16px; }
   .provider-badge {
     font-family: 'Press Start 2P', monospace;
-    font-size: 5px;
+    font-size: 9px;
     padding: 2px 6px;
     border-radius: 3px;
     background: rgba(0,212,255,0.15);
@@ -437,9 +437,9 @@
     justify-content: space-between;
     padding: 6px 0;
     border-bottom: 1px solid rgba(30,58,95,0.3);
-    font-size: 11px;
+    font-size: 15px;
   }
-  .revenue-icon { font-size: 14px; margin-right: 8px; }
+  .revenue-icon { font-size: 16px; margin-right: 8px; }
 
   /* RAM bar */
   .ram-bar-outer {
@@ -484,7 +484,7 @@
     display: flex;
     gap: 20px;
     font-family: 'Press Start 2P', monospace;
-    font-size: 7px;
+    font-size: 12px;
     color: var(--text-dim);
     z-index: 5;
     pointer-events: none;
@@ -501,7 +501,7 @@
   }
   .solar-sidebar-title {
     font-family: 'Press Start 2P', monospace;
-    font-size: 7px;
+    font-size: 12px;
     color: var(--orange);
     margin-bottom: 12px;
     letter-spacing: 1px;
@@ -513,14 +513,14 @@
     padding: 6px 4px;
     border-bottom: 1px solid rgba(30,58,95,0.3);
     cursor: pointer;
-    font-size: 11px;
+    font-size: 15px;
     transition: background 0.2s;
   }
   .orbital-item:hover { background: rgba(0,212,255,0.05); }
   .orbital-item .planet-name { color: var(--text); flex: 1; }
   .orbital-badge {
     font-family: 'Press Start 2P', monospace;
-    font-size: 5px;
+    font-size: 9px;
     padding: 2px 5px;
     border-radius: 3px;
   }
@@ -543,15 +543,15 @@
   .solar-info-panel.visible { display: block; }
   .solar-info-name {
     font-family: 'Press Start 2P', monospace;
-    font-size: 10px;
+    font-size: 15px;
     color: var(--cyan);
     margin-bottom: 4px;
   }
-  .solar-info-role { color: var(--text-dim); font-size: 11px; margin-bottom: 10px; }
+  .solar-info-role { color: var(--text-dim); font-size: 15px; margin-bottom: 10px; }
   .solar-info-row {
     display: flex;
     justify-content: space-between;
-    font-size: 11px;
+    font-size: 15px;
     padding: 3px 0;
   }
   .solar-info-row .label { color: var(--text-dim); }
@@ -566,7 +566,7 @@
   }
   .solar-ctrl-btn {
     font-family: 'Press Start 2P', monospace;
-    font-size: 6px;
+    font-size: 10px;
     padding: 6px 10px;
     background: rgba(17,24,39,0.8);
     border: 1px solid var(--border);
@@ -586,7 +586,7 @@
     border-top: 1px solid var(--border);
     overflow: hidden;
     padding: 4px 12px;
-    font-size: 10px;
+    font-size: 14px;
     color: var(--text-dim);
     z-index: 5;
   }
@@ -610,15 +610,15 @@
     gap: 8px;
     padding: 5px 0;
     border-bottom: 1px solid rgba(30,58,95,0.2);
-    font-size: 11px;
+    font-size: 15px;
   }
   .quest-agent-name { color: var(--cyan); cursor: pointer; }
   .quest-agent-name:hover { text-decoration: underline; }
-  .quest-time { color: var(--text-dim); margin-left: auto; font-size: 10px; }
-  .quest-ok { color: var(--green); font-family: 'Press Start 2P', monospace; font-size: 6px; }
-  .quest-err { color: var(--red); font-family: 'Press Start 2P', monospace; font-size: 6px; }
+  .quest-time { color: var(--text-dim); margin-left: auto; font-size: 14px; }
+  .quest-ok { color: var(--green); font-family: 'Press Start 2P', monospace; font-size: 10px; }
+  .quest-err { color: var(--red); font-family: 'Press Start 2P', monospace; font-size: 10px; }
   .action-line {
-    font-size: 11px;
+    font-size: 15px;
     padding: 4px 0;
     border-bottom: 1px solid rgba(30,58,95,0.15);
   }
@@ -626,13 +626,13 @@
   .action-agent { color: var(--cyan); margin-right: 6px; }
   .achievement-agent {
     font-family: 'Press Start 2P', monospace;
-    font-size: 7px;
+    font-size: 11px;
     color: var(--orange);
     margin-top: 8px;
     margin-bottom: 4px;
   }
-  .achievement-item { font-size: 11px; padding: 2px 0; color: var(--text-dim); }
-  .change-line { font-size: 11px; padding: 3px 0; border-bottom: 1px solid rgba(30,58,95,0.15); }
+  .achievement-item { font-size: 15px; padding: 2px 0; color: var(--text-dim); }
+  .change-line { font-size: 15px; padding: 3px 0; border-bottom: 1px solid rgba(30,58,95,0.15); }
   .change-time { color: var(--text-dim); margin-right: 8px; }
   .change-file { color: var(--yellow); }
 
@@ -642,7 +642,7 @@
   .roadmap-layout { padding: 16px; overflow-y: auto; flex: 1; }
   .roadmap-title {
     font-family: 'Press Start 2P', monospace;
-    font-size: 10px;
+    font-size: 16px;
     color: var(--orange);
     text-align: center;
     margin-bottom: 20px;
@@ -662,7 +662,7 @@
     align-items: center;
     padding: 12px 16px;
     font-family: 'Press Start 2P', monospace;
-    font-size: 8px;
+    font-size: 13px;
     color: #fff;
   }
   .roadmap-progress-bar-outer {
@@ -678,8 +678,8 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 4px 0;
-    font-size: 12px;
+    padding: 5px 0;
+    font-size: 16px;
   }
   .roadmap-item.done .ri-prefix { color: var(--green); }
   .roadmap-item.active .ri-prefix { color: var(--orange); }
@@ -687,7 +687,7 @@
   .roadmap-item.pending .ri-text { color: var(--text-dim); opacity: 0.6; }
   .ri-prefix { font-weight: bold; width: 14px; }
   .ri-text { flex: 1; }
-  .ri-assignee { color: var(--text-dim); font-size: 10px; }
+  .ri-assignee { color: var(--text-dim); font-size: 14px; }
 
   .total-progress {
     background: rgba(17,24,39,0.7);
@@ -699,7 +699,7 @@
   }
   .total-progress-label {
     font-family: 'Press Start 2P', monospace;
-    font-size: 9px;
+    font-size: 14px;
     color: var(--yellow);
     margin-bottom: 10px;
   }
@@ -736,7 +736,7 @@
     gap: 6px;
     padding: 8px 10px;
     cursor: pointer;
-    font-size: 10px;
+    font-size: 12px;
     transition: background 0.2s;
     border-left: 2px solid transparent;
   }
@@ -747,7 +747,7 @@
   }
   .chat-sidebar-name {
     font-family: 'Press Start 2P', monospace;
-    font-size: 6px;
+    font-size: 10px;
     color: var(--text);
     flex: 1;
   }
@@ -762,7 +762,7 @@
     padding: 12px 16px;
     border-bottom: 1px solid var(--border);
     font-family: 'Press Start 2P', monospace;
-    font-size: 9px;
+    font-size: 14px;
     color: var(--cyan);
     background: rgba(17,24,39,0.7);
   }
@@ -779,14 +779,14 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 12px;
+    font-size: 16px;
     color: var(--text-dim);
   }
   .chat-bubble {
     max-width: 70%;
     padding: 10px 14px;
     border-radius: 8px;
-    font-size: 12px;
+    font-size: 16px;
     line-height: 1.5;
   }
   .chat-bubble.agent {
@@ -801,7 +801,7 @@
   }
   .chat-bubble .sender {
     font-family: 'Press Start 2P', monospace;
-    font-size: 6px;
+    font-size: 10px;
     color: var(--cyan);
     margin-bottom: 4px;
   }
@@ -822,13 +822,13 @@
     padding: 8px 12px;
     color: var(--text);
     font-family: 'Share Tech Mono', monospace;
-    font-size: 12px;
+    font-size: 14px;
     outline: none;
   }
   .chat-input:focus { border-color: var(--cyan); }
   .chat-send-btn {
     font-family: 'Press Start 2P', monospace;
-    font-size: 7px;
+    font-size: 11px;
     padding: 8px 16px;
     background: rgba(0,212,255,0.2);
     border: 1px solid var(--cyan);
@@ -1333,6 +1333,7 @@ let solarState = {
   autoRotate: true, showLabels: true,
   selectedAgent: null, time: 0,
   stars: [],
+  shootingStars: [],
 };
 
 function initSolarSystem() {
@@ -1488,7 +1489,7 @@ function initSolarSystem() {
     });
 
     // SUN
-    const sunR = 30 * zm;
+    const sunR = 45 * zm;
     // Corona glow
     const coronaPulse = 1 + 0.15 * Math.sin(solarState.time * 0.05);
     const corona = ctx.createRadialGradient(centerX, centerY, sunR * 0.5, centerX, centerY, sunR * 3 * coronaPulse);
@@ -1510,7 +1511,63 @@ function initSolarSystem() {
 
     if (solarState.autoRotate) solarState.time += 1;
 
-    // Draw orbits, planets, moons, rings
+    // ── SHOOTING STARS (agent activity beams between planets) ──
+    // Spawn new shooting stars
+    if (Math.random() < 0.04 && C.agents.length > 1) {
+      const fromA = C.agents[Math.floor(Math.random() * C.agents.length)];
+      let toA = fromA;
+      while (toA === fromA) toA = C.agents[Math.floor(Math.random() * C.agents.length)];
+      const fAngle = solarState.time * (fromA.speed || 0.005);
+      const fOrbit = (fromA.orbit || 100) * zm;
+      const tAngle = solarState.time * (toA.speed || 0.005);
+      const tOrbit = (toA.orbit || 100) * zm;
+      solarState.shootingStars.push({
+        fx: centerX + Math.cos(fAngle) * fOrbit,
+        fy: centerY + Math.sin(fAngle) * fOrbit * 0.5,
+        tx: centerX + Math.cos(tAngle) * tOrbit,
+        ty: centerY + Math.sin(tAngle) * tOrbit * 0.5,
+        progress: 0,
+        speed: 0.015 + Math.random() * 0.02,
+        color: fromA.color,
+        agent: fromA.name,
+      });
+    }
+    // Draw & update shooting stars
+    solarState.shootingStars = solarState.shootingStars.filter(ss => {
+      ss.progress += ss.speed;
+      if (ss.progress > 1) return false;
+      const cx = ss.fx + (ss.tx - ss.fx) * ss.progress;
+      const cy = ss.fy + (ss.ty - ss.fy) * ss.progress;
+      const tailLen = 0.08;
+      const tx = ss.fx + (ss.tx - ss.fx) * Math.max(0, ss.progress - tailLen);
+      const ty = ss.fy + (ss.ty - ss.fy) * Math.max(0, ss.progress - tailLen);
+      const grad = ctx.createLinearGradient(tx, ty, cx, cy);
+      grad.addColorStop(0, ss.color + '00');
+      grad.addColorStop(0.5, ss.color + 'aa');
+      grad.addColorStop(1, '#ffffff');
+      ctx.beginPath();
+      ctx.moveTo(tx, ty);
+      ctx.lineTo(cx, cy);
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = 2 * zm;
+      ctx.stroke();
+      // Head glow
+      ctx.beginPath();
+      ctx.arc(cx, cy, 3 * zm, 0, Math.PI * 2);
+      ctx.fillStyle = '#ffffffcc';
+      ctx.fill();
+      return true;
+    });
+
+    // ── Build cron-to-agent map for satellites ──
+    const cronsByAgent = {};
+    C.crons.forEach((cr, i) => {
+      const agentName = cr.agent.toUpperCase();
+      if (!cronsByAgent[agentName]) cronsByAgent[agentName] = [];
+      cronsByAgent[agentName].push({ ...cr, _idx: i });
+    });
+
+    // ── Draw orbits, planets, cron satellites, moons, rings ──
     C.agents.forEach(a => {
       const orbitR = (a.orbit || 100) * zm;
       const orbitRY = orbitR * 0.5;
@@ -1526,14 +1583,13 @@ function initSolarSystem() {
       const angle = solarState.time * (a.speed || 0.005);
       const px = centerX + Math.cos(angle) * orbitR;
       const py = centerY + Math.sin(angle) * orbitRY;
-      const planetR = (a.size || 8) * zm * 0.7;
+      const planetR = (a.size || 8) * zm * 1.4;
 
       // Orbital trail
       ctx.beginPath();
-      const trailLen = 0.4;
-      ctx.ellipse(centerX, centerY, orbitR, orbitRY, 0, angle - trailLen, angle);
+      ctx.ellipse(centerX, centerY, orbitR, orbitRY, 0, angle - 0.5, angle);
       ctx.strokeStyle = a.color + '44';
-      ctx.lineWidth = 2 * zm;
+      ctx.lineWidth = 3 * zm;
       ctx.stroke();
 
       // Rings (Saturn-type)
@@ -1541,20 +1597,20 @@ function initSolarSystem() {
         ctx.beginPath();
         ctx.ellipse(px, py, planetR * 2.2, planetR * 0.5, 0.3, 0, Math.PI * 2);
         ctx.strokeStyle = a.color + '66';
-        ctx.lineWidth = 3 * zm;
+        ctx.lineWidth = 4 * zm;
         ctx.stroke();
       }
 
       // Planet glow
-      const glow = ctx.createRadialGradient(px, py, planetR * 0.5, px, py, planetR * 2.5);
-      glow.addColorStop(0, a.color + '33');
+      const glow = ctx.createRadialGradient(px, py, planetR * 0.5, px, py, planetR * 3);
+      glow.addColorStop(0, a.color + '44');
       glow.addColorStop(1, a.color + '00');
       ctx.fillStyle = glow;
-      ctx.fillRect(px - planetR*3, py - planetR*3, planetR*6, planetR*6);
+      ctx.fillRect(px - planetR*4, py - planetR*4, planetR*8, planetR*8);
 
       // Planet body
       const pGrad = ctx.createRadialGradient(px - planetR*0.3, py - planetR*0.3, planetR*0.1, px, py, planetR);
-      pGrad.addColorStop(0, '#ffffff44');
+      pGrad.addColorStop(0, '#ffffff55');
       pGrad.addColorStop(0.3, a.color);
       pGrad.addColorStop(1, a.color + '88');
       ctx.beginPath();
@@ -1565,7 +1621,7 @@ function initSolarSystem() {
       // Selected highlight
       if (solarState.selectedAgent === a.id) {
         ctx.beginPath();
-        ctx.arc(px, py, planetR + 4*zm, 0, Math.PI*2);
+        ctx.arc(px, py, planetR + 5*zm, 0, Math.PI*2);
         ctx.strokeStyle = '#00d4ff';
         ctx.lineWidth = 2;
         ctx.setLineDash([4,4]);
@@ -1573,20 +1629,55 @@ function initSolarSystem() {
         ctx.setLineDash([]);
       }
 
-      // Moons
+      // ── CRON SATELLITES (small dots orbiting each planet) ──
+      const agentCrons = cronsByAgent[a.name.toUpperCase()] || [];
+      agentCrons.forEach((cr, ci) => {
+        const satOrbit = (planetR + 12 * zm) + ci * 8 * zm;
+        const satSpeed = 0.02 + ci * 0.008;
+        const satAngle = solarState.time * satSpeed + ci * 1.2;
+        const sx = px + Math.cos(satAngle) * satOrbit;
+        const sy = py + Math.sin(satAngle) * satOrbit * 0.7;
+        const satR = 2.5 * zm;
+        const satColor = cr.status === 'ok' ? '#00ff88' : cr.status === 'error' ? '#ff3355' : '#5a7a9a';
+        // Satellite orbit line
+        ctx.beginPath();
+        ctx.ellipse(px, py, satOrbit, satOrbit * 0.7, 0, 0, Math.PI * 2);
+        ctx.strokeStyle = satColor + '18';
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+        // Satellite dot
+        ctx.beginPath();
+        ctx.arc(sx, sy, satR, 0, Math.PI * 2);
+        ctx.fillStyle = satColor;
+        ctx.fill();
+        // Satellite glow
+        ctx.beginPath();
+        ctx.arc(sx, sy, satR * 2.5, 0, Math.PI * 2);
+        ctx.fillStyle = satColor + '22';
+        ctx.fill();
+        // Satellite label
+        if (solarState.showLabels && zm > 0.6) {
+          ctx.font = `${Math.max(6*zm, 5)}px 'Share Tech Mono'`;
+          ctx.fillStyle = satColor + 'aa';
+          ctx.textAlign = 'center';
+          ctx.fillText(cr.name.substring(0, 15), sx, sy + satR + 7*zm);
+        }
+      });
+
+      // Moons (from config)
       if (a.moons) {
         a.moons.forEach(moon => {
           const mAngle = solarState.time * (moon.speed || 0.03);
           const mOrbit = (moon.orbit || 20) * zm;
           const mx = px + Math.cos(mAngle) * mOrbit;
           const my = py + Math.sin(mAngle) * mOrbit * 0.6;
-          const mr = (moon.size || 3) * zm * 0.6;
+          const mr = (moon.size || 3) * zm * 0.8;
           ctx.beginPath();
           ctx.arc(mx, my, mr, 0, Math.PI * 2);
           ctx.fillStyle = moon.color || '#aaa';
           ctx.fill();
           if (solarState.showLabels) {
-            ctx.font = `${Math.max(7*zm, 6)}px 'Share Tech Mono'`;
+            ctx.font = `${Math.max(8*zm, 6)}px 'Share Tech Mono'`;
             ctx.fillStyle = '#8899aa';
             ctx.textAlign = 'center';
             ctx.fillText(moon.name, mx, my + mr + 10*zm);
@@ -1596,14 +1687,14 @@ function initSolarSystem() {
 
       // Labels
       if (solarState.showLabels) {
-        ctx.font = `bold ${Math.max(9*zm, 7)}px 'Press Start 2P'`;
+        ctx.font = `bold ${Math.max(11*zm, 8)}px 'Press Start 2P'`;
         ctx.fillStyle = '#c0d8f0';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
-        ctx.fillText(a.name, px, py + planetR + 6*zm);
-        ctx.font = `${Math.max(7*zm, 6)}px 'Share Tech Mono'`;
+        ctx.fillText(a.name, px, py + planetR + 8*zm);
+        ctx.font = `${Math.max(9*zm, 7)}px 'Share Tech Mono'`;
         ctx.fillStyle = '#5a7a9a';
-        ctx.fillText(a.role, px, py + planetR + 18*zm);
+        ctx.fillText(a.role, px, py + planetR + 22*zm);
         ctx.textBaseline = 'alphabetic';
       }
     });

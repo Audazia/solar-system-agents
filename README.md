@@ -10,14 +10,14 @@ A cyberpunk command center for monitoring AI agent fleets in real-time. Two view
   <img src="https://img.shields.io/badge/agents-any_framework-blue?style=flat-square" />
   <img src="https://img.shields.io/badge/setup-30_seconds-green?style=flat-square" />
   <img src="https://img.shields.io/badge/dependencies-zero-orange?style=flat-square" />
-  <img src="https://img.shields.io/github/stars/roomsterdam/solar-system-agents?style=flat-square" />
-  <img src="https://img.shields.io/github/license/roomsterdam/solar-system-agents?style=flat-square" />
+  <img src="https://img.shields.io/github/stars/Audazia/solar-system-agents?style=flat-square" />
+  <img src="https://img.shields.io/github/license/Audazia/solar-system-agents?style=flat-square" />
 </p>
 
 <p align="center">
-  <a href="https://vercel.com/new/clone?repository-url=https://github.com/roomsterdam/solar-system-agents"><img src="https://vercel.com/button" alt="Deploy with Vercel" /></a>
+  <a href="https://vercel.com/new/clone?repository-url=https://github.com/Audazia/solar-system-agents"><img src="https://vercel.com/button" alt="Deploy with Vercel" /></a>
   &nbsp;
-  <a href="https://app.netlify.com/start/deploy?repository=https://github.com/roomsterdam/solar-system-agents"><img src="https://www.netlify.com/img/deploy/button.svg" alt="Deploy to Netlify" /></a>
+  <a href="https://app.netlify.com/start/deploy?repository=https://github.com/Audazia/solar-system-agents"><img src="https://www.netlify.com/img/deploy/button.svg" alt="Deploy to Netlify" /></a>
 </p>
 
 ---
@@ -60,13 +60,13 @@ An orbital visualization where:
 
 ## Deploy in 30 Seconds
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Froomsterdam%2Fsolar-system-agents)
-[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/roomsterdam/solar-system-agents)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FAudazia%2Fsolar-system-agents)
+[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/Audazia/solar-system-agents)
 
 Or run locally:
 
 ```bash
-git clone https://github.com/roomsterdam/solar-system-agents.git
+git clone https://github.com/Audazia/solar-system-agents.git
 cd solar-system-agents
 open mission-control.html
 ```
@@ -218,6 +218,6 @@ MIT License. Use it however you want.
 
 ---
 
-**Built by [AUDAZ.AI](https://github.com/roomsterdam)** — We build AI agent infrastructure.
+**Built by [AUDAZ.IA](https://github.com/Audazia)** — We build AI agent infrastructure.
 
 If this helps you, star the repo. It helps others find it.

@@ -43,9 +43,9 @@ Works with any multi-agent framework: CrewAI, LangChain, AutoGPT, OpenAI Assista
 **Makers:** @killerwhale.ai
 
 **Links:**
-- GitHub: https://github.com/roomsterdam/solar-system-agents
-- Live Demo: https://roomsterdam.github.io/solar-system-agents/mission-control.html
-- Landing: https://roomsterdam.github.io/solar-system-agents/landing.html
+- GitHub: https://github.com/Audazia/solar-system-agents
+- Live Demo: https://Audazia.github.io/solar-system-agents/mission-control.html
+- Landing: https://Audazia.github.io/solar-system-agents/landing.html
 
 **Thumbnail/Gallery:**
 1. mission-control-live.gif (LEAD — the full dashboard)
@@ -72,7 +72,7 @@ What you get:
 
 It's static HTML. Clone, open, done. Or deploy to Vercel/Netlify with one click.
 
-We're also building a hosted Pro version ($29/mo) with auth, live connectors, and framework adapters. Join the waitlist if interested: https://roomsterdam.github.io/solar-system-agents/landing.html
+We're also building a hosted Pro version ($29/mo) with auth, live connectors, and framework adapters. Join the waitlist if interested: https://Audazia.github.io/solar-system-agents/landing.html
 
 MIT licensed. PRs welcome. What features would you add?"
 
